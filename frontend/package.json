@@ -1,0 +1,17 @@
+{
+  "name": "invisible-stories-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --test tests/state.test.js",
+    "test:content": "python3 tests/verify_content.py",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": { "react": "^19.0.0", "react-dom": "^19.0.0", "react-router-dom": "^7.0.0" },
+  "devDependencies": { "@playwright/test": "^1.56.0", "@vitejs/plugin-react": "^4.4.0", "vite": "^6.1.0" }
+}
