@@ -49,6 +49,17 @@ async function assertText(page, text) {
   for (const p of text.split("\n\n"))
     await expect(page.locator("main")).toContainText(p);
 }
+async function revealAll(page) {
+  const button = page.getByRole("button", {
+    name: "Продолжить чтение",
+    exact: true,
+  });
+  while (await button.count()) {
+    const old = await page.getByRole("status").innerText();
+    await button.click();
+    await expect(page.getByRole("status")).not.toHaveText(old);
+  }
+}
 async function finishQuiz(page) {
   await page.goto("http://pilot.test/quiz/1");
   for (let i = 0; i < 5; i++) {
@@ -117,6 +128,7 @@ test("complete production pilot, exact content, gates, reload, reset and no answ
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       scene.title,
     );
+    await revealAll(page);
     for (const k of [
       "text",
       "narration",
@@ -302,4 +314,148 @@ test("guarded direct links, small layouts, keyboard and unavailable storage", as
     .getByRole("button", { name: /^(Начать|Продолжить) выставку →$/ })
     .click();
   await expect(page.getByRole("radio")).toHaveCount(4);
+});
+
+test("sequential reading: one key press, repeat protection, refresh, back and narrow screens", async ({
+  page,
+}, info) => {
+  await finishQuiz(page);
+  await page.goto("http://pilot.test/stories/nikita/sunday");
+  await goNext(page);
+  await expect(page).toHaveURL(/\/messages_dima$/);
+  const first = story.stages[0].scenes[1];
+  await expect(page.getByRole("status")).toHaveText(
+    "Открыто фрагментов: 1 из 4",
+  );
+  await expect(
+    page.getByText(first.messages[0].text, { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(first.messages[1].text, { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Далее →", exact: true }),
+  ).toBeDisabled();
+  await page
+    .getByRole("button", { name: "Продолжить чтение", exact: true })
+    .focus();
+  await page.keyboard.down("Enter");
+  await expect(page.getByRole("status")).toHaveText(
+    "Открыто фрагментов: 2 из 4",
+  );
+  await page.keyboard.down("Enter");
+  await page.keyboard.up("Enter");
+  await expect(page.getByRole("status")).toHaveText(
+    "Открыто фрагментов: 2 из 4",
+  );
+  await expect(
+    page.getByText(first.messages[1].text, { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(
+    "Открыто фрагментов: 2 из 4",
+  );
+  await revealAll(page);
+  await goNext(page);
+  await expect(page).toHaveURL(/\/keys$/);
+  await expect(page.getByRole("status")).toHaveText(
+    "Открыто фрагментов: 1 из 10",
+  );
+  await expect(
+    page.getByText("Никит, иди сюда. Поговорим.", { exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "← Назад", exact: true }).click();
+  await expect(page).toHaveURL(/\/messages_dima$/);
+  await expect(
+    page.getByRole("button", { name: "Сцена прочитана", exact: true }),
+  ).toBeDisabled();
+  await goNext(page);
+  await expect(page).toHaveURL(/\/keys$/);
+  for (const width of [320, 375, 430, 768, 1023, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    await noOverflow(page);
+  }
+  await page.setViewportSize(info.project.use.viewport);
+  await revealAll(page);
+  await expect(
+    page.getByRole("button", { name: "Далее →", exact: true }),
+  ).toBeEnabled();
+  await page.screenshot({
+    path: `${artifacts}/sequence-${info.project.name}.png`,
+    fullPage: true,
+  });
+  await page.goBack();
+  await expect(page).toHaveURL(/\/messages_dima$/);
+  await expect(
+    page.getByRole("button", { name: "Сцена прочитана", exact: true }),
+  ).toBeDisabled();
+});
+
+test("existing v1 session migrates in the browser without replaying visited scenes or losing answers", async ({
+  page,
+}) => {
+  const legacy = {
+    version: 1,
+    contentVersion: "pilot-1",
+    cursor: "/stories/nikita/map",
+    quiz: {
+      answers: { 0: "B", 1: "C", 2: "C", 3: "A", 4: "C" },
+      completed: true,
+    },
+    nikita: {
+      unlocked: 5,
+      opened: ["dima_chat", "phone_note", "voice_message"],
+      active: "phone_note",
+      answers: { kitchen: "B", football: "C", unsent_message: "A" },
+      revealed: true,
+      completed: false,
+    },
+    stats: {
+      unlocked: 0,
+      filter: "Только нефизические",
+      expanded: [],
+      answer: null,
+      revealed: false,
+      completed: false,
+    },
+  };
+  await page.goto("http://pilot.test/");
+  await page.evaluate(
+    (value) =>
+      sessionStorage.setItem(
+        "invisible-stories:pilot:v1",
+        JSON.stringify(value),
+      ),
+    legacy,
+  );
+  await page.goto("http://pilot.test/stories/nikita/map");
+  await expect(
+    page.getByRole("button", { name: "К заключению →" }),
+  ).toBeEnabled();
+  await expect(page.getByRole("radio")).toHaveCount(0);
+  await page.getByRole("button", { name: "← Назад", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "К карте невидимого →" }),
+  ).toBeEnabled();
+  await expect(page.locator(".studied")).toHaveCount(3);
+  await expect(
+    page.getByText("НЕ СПРАШИВАТЬ, ЕСЛИ ПАПА ВЫПИЛ", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "← Назад", exact: true }).click();
+  await expect(page).toHaveURL(/\/football$/);
+  await expect(
+    page.getByRole("button", { name: "Сцена прочитана", exact: true }),
+  ).toBeDisabled();
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Сцена прочитана", exact: true }),
+  ).toBeDisabled();
+  const saved = await page.evaluate(() =>
+    JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")),
+  );
+  expect(saved.version).toBe(2);
+  expect(saved.quiz).toEqual(legacy.quiz);
+  expect(saved.stories.nikita.answers).toEqual(legacy.nikita.answers);
+  expect(saved.stories.nikita.currentStepId).toBe("football");
+  expect(saved.stats.filter).toBe("Только нефизические");
 });

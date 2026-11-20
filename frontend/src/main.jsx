@@ -16,10 +16,10 @@ import {
   Quiz,
   Transition,
   Selection,
-  StoryPage,
   StatisticsPage,
   Completion,
 } from "./pages/Exhibition";
+import StoryPage from "./pages/StoryPage";
 import "./styles.css";
 function App() {
   const { state, dispatch, storageAvailable } = useExhibition();
@@ -140,7 +140,7 @@ function App() {
             <Route path="/quiz/complete" element={<Transition />} />
             <Route path="/quiz/:questionId" element={<Quiz />} />
             <Route path="/stories" element={<Selection />} />
-            <Route path="/stories/nikita/:stepId" element={<StoryPage />} />
+            <Route path="/stories/:storyId/:stepId" element={<StoryPage />} />
             <Route path="/statistics/:screenId" element={<StatisticsPage />} />
             <Route path="/complete" element={<Completion />} />
             <Route path="*" element={<Navigate to="/" replace />} />

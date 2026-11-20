@@ -1,8 +1,8 @@
+import { storyRegistry } from "../content/storyRegistry.js";
 import { useNavigate, useParams } from "react-router-dom";
 import questions from "../content/initialQuiz.json";
-import nikita from "../content/nikita.json";
 import { useExhibition } from "../state/Provider";
-import { quizPath, storyPath, steps } from "../state/model";
+import { quizPath, storyPath } from "../state/model";
 import {
   Choices,
   Navigation,
@@ -10,7 +10,6 @@ import {
   Paragraphs,
   Progress,
 } from "../components/UI";
-import { Scene, MaterialContent } from "../components/Story";
 import Statistics from "./Statistics";
 export function Home() {
   const { state } = useExhibition();
@@ -200,213 +199,35 @@ export function Selection() {
         Для первого пользовательского тестирования доступна история Никиты. Две
         другие истории находятся в разработке.
       </p>
-      <article className="story-card">
-        <img
-          src="/assets/nikita/cover.jpg"
-          alt="Архивный коллаж истории Никиты"
-        />
-        <div>
-          <div className="eyebrow">ДЕЛО 01 / НИКИТА, 14 ЛЕТ</div>
-          <h2>Когда всё спокойно</h2>
-          <p>
-            Один подросток, четыре повседневные сцены и то, что остаётся за
-            кадром.
-          </p>
-          <button
-            className="primary"
-            onClick={() => nav(storyPath(state.nikita.unlocked))}
-          >
-            {state.nikita.unlocked
-              ? "Продолжить историю Никиты →"
-              : "Начать историю Никиты →"}
-          </button>
-        </div>
-      </article>
+      {Object.values(storyRegistry).map((story) => (
+        <article className="story-card" key={story.id}>
+          <img
+            src={story.presentation.selection?.cover}
+            alt={story.presentation.selection?.alt ?? story.title}
+          />
+          <div>
+            <div className="eyebrow">{story.presentation.selection?.tag}</div>
+            <h2>{story.title}</h2>
+            <p>{story.presentation.selection?.description}</p>
+            <button
+              className="primary"
+              onClick={() =>
+                nav(storyPath(state.stories[story.id].unlocked, story.id))
+              }
+            >
+              {state.stories[story.id].unlocked
+                ? (story.presentation.selection?.continueLabel ??
+                  "Продолжить историю")
+                : (story.presentation.selection?.startLabel ??
+                  "Начать историю")}
+            </button>
+          </div>
+        </article>
+      ))}
       <p className="caption">
         Истории 02 и 03 будут добавлены в полной версии выставки.
       </p>
       <button onClick={() => nav("/quiz/complete")}>← Назад</button>
-    </>
-  );
-}
-export function StoryPage() {
-  const { stepId } = useParams();
-  const index = steps.indexOf(stepId);
-  const { state, dispatch } = useExhibition();
-  const s = state.nikita;
-  const nav = useNavigate();
-  const scenes = [...nikita.stages[0].scenes, ...nikita.stages[1].scenes];
-  const materials = nikita.stages[2].materials;
-  const qs = nikita.stages[3].questions;
-  const end = nikita.stages[4];
-  const allOpened = materials.every((m) => s.opened.includes(m.id));
-  const allAnswered = qs.every((q) => s.answers[q.id]);
-  if (index < 0) return null;
-  return (
-    <>
-      <div className="eyebrow">ИСТОРИЯ 01 / КОГДА ВСЁ СПОКОЙНО</div>
-      <Progress current={index + 1} total={7} label="Этап" />
-      {index < 4 && <Scene scene={scenes[index]} />}
-      {index === 4 && (
-        <>
-          <h1>То, что осталось за кадром</h1>
-          <p>
-            Перед вами три материала из жизни Никиты. Откройте каждый из них.
-            Порядок не имеет значения.
-          </p>
-          <Progress
-            current={s.opened.length}
-            total={3}
-            label="Изучено материалов"
-          />
-          {materials.map((m) => (
-            <section className="material" key={m.id}>
-              <div className="material-heading">
-                <div>
-                  <h2>{m.title}</h2>
-                  <p className="caption">{m.description}</p>
-                </div>
-                {s.opened.includes(m.id) && (
-                  <span className="studied">✓ МАТЕРИАЛ ИЗУЧЕН</span>
-                )}
-              </div>
-              <button
-                className="disclosure"
-                aria-expanded={s.active === m.id}
-                aria-controls={`material-${m.id}`}
-                onClick={() => dispatch({ type: "MATERIAL", id: m.id })}
-              >
-                {s.active === m.id ? "Скрыть материал ↑" : "Открыть материал ↓"}
-              </button>
-              {s.active === m.id && (
-                <div id={`material-${m.id}`}>
-                  <MaterialContent material={m} />
-                </div>
-              )}
-            </section>
-          ))}
-          <Note>
-            {allOpened
-              ? "Все три материала изучены."
-              : "Чтобы продолжить, откройте все три материала."}
-          </Note>
-        </>
-      )}
-      {index === 5 && (
-        <>
-          <h1>Карта невидимого</h1>
-          <p>
-            Вернитесь к трём эпизодам истории Никиты. Выберите наиболее
-            обоснованную интерпретацию каждого из них.
-          </p>
-          <p className="caption">
-            Здесь нет оценки вашей личности. Важно разобраться в ситуации.
-          </p>
-          {qs.map((q) => (
-            <section className="map-question" key={q.id}>
-              <h2>{q.title}</h2>
-              <blockquote>«{q.fragment}»</blockquote>
-              <p>Как можно интерпретировать этот эпизод?</p>
-              {s.revealed ? (
-                <>
-                  <div className="answer-box">
-                    <div className="eyebrow">ВАШ ВЫБОР</div>
-                    <p>
-                      {s.answers[q.id]}. {q.options[s.answers[q.id]]}
-                    </p>
-                  </div>
-                  <Note>
-                    <div className="eyebrow">
-                      НАИБОЛЕЕ ОБОСНОВАННАЯ ИНТЕРПРЕТАЦИЯ
-                    </div>
-                    <p>
-                      <strong>
-                        {q.correct}. {q.options[q.correct]}
-                      </strong>
-                    </p>
-                    <p>{q.explanation}</p>
-                  </Note>
-                </>
-              ) : (
-                <Choices
-                  name={`map-${q.id}`}
-                  legend="Выберите один ответ"
-                  options={q.options}
-                  value={s.answers[q.id]}
-                  onChange={(v) =>
-                    dispatch({ type: "MAP_ANSWER", id: q.id, value: v })
-                  }
-                />
-              )}
-            </section>
-          ))}
-          {!s.revealed ? (
-            <>
-              <p className="caption">
-                {!allAnswered && "Выберите ответы во всех трёх эпизодах."}
-              </p>
-              <button
-                className="primary"
-                disabled={!allAnswered}
-                onClick={() => dispatch({ type: "MAP_REVEAL" })}
-              >
-                Раскрыть связи
-              </button>
-            </>
-          ) : (
-            <p className="success">
-              Вы рассмотрели три эпизода и раскрыли связанные с ними формы
-              семейного неблагополучия.
-            </p>
-          )}
-        </>
-      )}
-      {index === 6 && (
-        <>
-          <div className="eyebrow">ИСТОРИЯ 01 / ЗАКЛЮЧЕНИЕ</div>
-          <h1>{end.title}</h1>
-          <p className="lead">{end.introduction}</p>
-          <div className="factor-grid">
-            {end.factors.map((f, i) => (
-              <article key={f.title}>
-                <div className="eyebrow">
-                  ФАКТОР {String(i + 1).padStart(2, "0")}
-                </div>
-                <h2>{f.title}</h2>
-                <p>{f.text}</p>
-              </article>
-            ))}
-          </div>
-          <div className="ending">
-            <Paragraphs text={end.final_text} />
-            <p className="emphasis">{end.final_emphasis}</p>
-          </div>
-        </>
-      )}
-      <Navigation
-        back
-        next
-        disabled={(index === 4 && !allOpened) || (index === 5 && !s.revealed)}
-        onBack={() => nav(index ? storyPath(index - 1) : "/stories")}
-        nextLabel={
-          index === 4
-            ? "К карте невидимого →"
-            : index === 5
-              ? "К заключению →"
-              : index === 6
-                ? "К невидимой статистике →"
-                : "Далее →"
-        }
-        onNext={() => {
-          if (index === 6) {
-            dispatch({ type: "STORY_COMPLETE" });
-            nav("/statistics/1");
-          } else {
-            dispatch({ type: "STORY_ADVANCE", index });
-            nav(storyPath(index + 1));
-          }
-        }}
-      />
     </>
   );
 }
@@ -426,7 +247,16 @@ export function StatisticsPage() {
       <Navigation
         back
         next
-        onBack={() => nav(i ? `/statistics/${i}` : storyPath(6))}
+        onBack={() =>
+          nav(
+            i
+              ? `/statistics/${i}`
+              : storyPath(
+                  Object.values(storyRegistry).at(-1).steps.length - 1,
+                  Object.keys(storyRegistry).at(-1),
+                ),
+          )
+        }
         nextLabel={i === 3 ? "Завершить пилот →" : "Далее →"}
         onNext={() => {
           if (i === 3) {

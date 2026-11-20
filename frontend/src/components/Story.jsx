@@ -1,38 +1,18 @@
 import { Paragraphs } from "./UI";
-const artwork = {
-  sunday: ["sunday.jpg", "АРХИВ / ВОСКРЕСЕНЬЕ"],
-  messages_dima: ["messages.jpg", "АРХИВ / СООБЩЕНИЯ"],
-  keys: ["keys.jpg", "АРХИВ / СРЕДА"],
-  football: ["football.jpg", "АРХИВ / ПЯТНИЦА"],
-};
-export function Photo({ id, compact = false }) {
-  const [file, label] = artwork[id];
+import StorySequence from "./StorySequence";
+import { sceneFragments } from "../content/storyRegistry.js";
+export function Photo({ art, compact = false }) {
+  if (!art) return null;
   return (
     <figure className={`archive-photo ${compact ? "compact-photo" : ""}`}>
       <img
-        src={`/assets/nikita/${file}`}
-        alt={`Художественная реконструкция: ${label}`}
-        width={
-          id === "football"
-            ? 1122
-            : id === "keys"
-              ? 602
-              : id === "sunday"
-                ? 587
-                : 582
-        }
-        height={
-          id === "football"
-            ? 365
-            : id === "keys"
-              ? 610
-              : id === "sunday"
-                ? 320
-                : 480
-        }
+        src={art.src}
+        alt={art.alt ?? `Художественная реконструкция: ${art.label}`}
+        width={art.width}
+        height={art.height}
       />
       <figcaption>
-        <span>{label}</span>
+        <span>{art.label}</span>
         <span>Художественная реконструкция</span>
       </figcaption>
     </figure>
@@ -46,11 +26,13 @@ export function Monologue({ text }) {
     </aside>
   );
 }
-export function Message({ message }) {
+export function Message({ message, character }) {
   return message.type === "narration" ? (
     <p className="narration">{message.text}</p>
   ) : (
-    <div className={`message-row ${message.sender === "Никита" ? "mine" : ""}`}>
+    <div
+      className={`message-row ${message.sender === character ? "mine" : ""}`}
+    >
       <div className="bubble">
         <span className="sender">{message.sender}</span>
         <p>{message.text}</p>
@@ -59,7 +41,7 @@ export function Message({ message }) {
     </div>
   );
 }
-export function Chat({ messages, title }) {
+export function Chat({ messages, title, character }) {
   return (
     <div className="chat">
       {title && (
@@ -69,72 +51,85 @@ export function Chat({ messages, title }) {
         </>
       )}
       {messages.map((m, i) => (
-        <Message key={i} message={m} />
+        <Message key={i} message={m} character={character} />
       ))}
     </div>
   );
 }
-export function Scene({ scene }) {
+function Fragment({ part, character }) {
+  if (part.kind === "message")
+    return <Message message={part.message} character={character} />;
+  if (part.kind === "monologue") return <Monologue text={part.text} />;
+  return <p className="narration">{part.text}</p>;
+}
+export function Scene({ scene, story, visible, onReveal }) {
+  const parts = sceneFragments(scene).slice(0, visible);
+  const presentation = story.presentation;
   return (
     <>
       <h1>{scene.title}</h1>
       {scene.time && <p className="caption">{scene.time}</p>}
-      {scene.type === "messages" ? (
-        <>
-          <div className="messages-layout">
-            <Photo id={scene.id} compact />
-            <div className="chat-panel">
-              <Chat title="Диалог с Димой" messages={scene.messages} />
+      <StorySequence
+        visible={visible}
+        total={sceneFragments(scene).length}
+        onReveal={onReveal}
+      >
+        {scene.type === "messages" ? (
+          <>
+            <div className="messages-layout">
+              <Photo art={presentation.artwork?.[scene.id]} compact />
+              <div className="chat-panel">
+                <Chat
+                  title={scene.chatTitle ?? presentation.chatTitle}
+                  messages={parts
+                    .filter((p) => p.kind === "message")
+                    .map((p) => p.message)}
+                  character={story.character}
+                />
+              </div>
             </div>
-          </div>
-          <div className="reading">
-            <p className="narration">{scene.narration}</p>
-            <Monologue text={scene.monologue} />
-          </div>
-        </>
-      ) : (
-        <>
-          <Photo id={scene.id} />
-          <div className="reading">
-            {scene.type === "monologue" ? (
-              <Monologue text={scene.text} />
-            ) : (
-              <>
-                {scene.messages && (
-                  <Chat title="Уведомление" messages={scene.messages} />
-                )}
-                {scene.monologue_before && (
-                  <Monologue text={scene.monologue_before} />
-                )}
-                {scene.narration && (
-                  <p className="narration">{scene.narration}</p>
-                )}
-                {scene.monologue_middle && (
-                  <Monologue text={scene.monologue_middle} />
-                )}
-                {scene.dialogue?.map((m, i) => (
-                  <Message key={i} message={m} />
+            <div className="reading">
+              {parts
+                .filter((p) => p.kind !== "message")
+                .map((part, i) => (
+                  <Fragment key={i} part={part} character={story.character} />
                 ))}
-                {scene.monologue_after && (
-                  <Monologue text={scene.monologue_after} />
-                )}
-              </>
-            )}
-          </div>
-        </>
-      )}
+            </div>
+          </>
+        ) : (
+          <>
+            <Photo art={presentation.artwork?.[scene.id]} />
+            <div className="reading">
+              {scene.messages && (
+                <>
+                  <div className="eyebrow">СООБЩЕНИЯ</div>
+                  <p className="chat-title">Уведомление</p>
+                </>
+              )}
+              {parts.map((part, i) => (
+                <Fragment key={i} part={part} character={story.character} />
+              ))}
+            </div>
+          </>
+        )}
+      </StorySequence>
     </>
   );
 }
-export function MaterialContent({ material: m }) {
+export function MaterialContent({ material: m, story }) {
+  const p = story.presentation;
   return (
     <div className="material-content">
       {m.type === "chat" && (
-        <Chat messages={m.messages} title="Диалог с Димой" />
+        <Chat
+          messages={m.messages}
+          title={m.chatTitle ?? p.chatTitle}
+          character={story.character}
+        />
       )}
       {m.type === "note" && (
         <div className="phone-note">
-          <div className="eyebrow">ЗАМЕТКИ / ТЕЛЕФОН НИКИТЫ</div>
+          <div className="eyebrow">{m.label ?? p.noteLabel}</div>
           <ul>
             {m.items.map((x) => (
               <li key={x}>
@@ -148,7 +143,7 @@ export function MaterialContent({ material: m }) {
       )}
       {m.type === "voice" && (
         <div className="voice">
-          <div className="eyebrow">НЕОТПРАВЛЕННОЕ ГОЛОСОВОЕ / МАМЕ</div>
+          <div className="eyebrow">{m.label ?? p.voiceLabel}</div>
           <div className="wave" aria-hidden="true">
             {[
               9, 18, 28, 14, 31, 20, 11, 26, 34, 16, 22, 12, 29, 18, 35, 15, 25,

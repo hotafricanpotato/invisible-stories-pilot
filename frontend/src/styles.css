@@ -1112,3 +1112,22 @@ footer {
 .choice.without-letter {
   grid-template-columns: 20px minmax(0, 1fr);
 }
+
+/* Reading controls do not trigger automatic scrolling or animations. */
+.sequence-controls {
+  max-width: 700px;
+  margin: 20px auto 0;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.sequence-controls .caption {
+  margin-bottom: 10px;
+}
+.sequence-controls button {
+  min-height: 48px;
+}
+@media (max-width: 760px) {
+  .sequence-controls button {
+    width: 100%;
+  }
+}
