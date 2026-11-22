@@ -1,8 +1,9 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { storyRegistry } from "../content/storyRegistry.js";
+import { storyRegistry, sceneFragments, fragmentRange } from "../content/storyRegistry.js";
 import { useExhibition } from "../state/Provider";
 import { storyPath, stepComplete } from "../state/model";
 import { Scene } from "../components/Story";
+import SceneNavigation from "../components/story/SceneNavigation";
 import StoryMaterials from "../components/StoryMaterials";
 import InvisibleMap from "../components/InvisibleMap";
 import { Navigation, Progress, Paragraphs } from "../components/UI";
@@ -23,8 +24,23 @@ export default function StoryPage() {
     Object.keys(storyRegistry)[Object.keys(storyRegistry).indexOf(storyId) - 1];
   const nextStoryId =
     Object.keys(storyRegistry)[Object.keys(storyRegistry).indexOf(storyId) + 1];
+  const goBack = () => nav(index ? storyPath(index - 1, storyId)
+    : previousStoryId ? storyPath(storyRegistry[previousStoryId].steps.length - 1, previousStoryId) : "/stories");
+  const goForward = () => {
+    if (last) {
+      send("STORY_COMPLETE");
+      nav(nextStoryId ? storyPath(0, nextStoryId) : "/statistics/1");
+    } else {
+      send("STORY_ADVANCE", { index });
+      nav(storyPath(index + 1, storyId));
+    }
+  };
+  const position = step.kind === "scene" ? p.currentFragments[step.id] : null;
+  const range = step.kind === "scene"
+    ? fragmentRange(step.scene, position, story.presentation.sceneModes?.[step.id]) : null;
+  const total = step.kind === "scene" ? sceneFragments(step.scene).length : 0;
   return (
-    <div className={step.kind === "scene" || step.kind === "materials" ? "story-design" : undefined} data-story-theme={story.presentation.theme ?? story.id}>
+    <div className={step.kind !== "conclusion" ? "story-design" : undefined}>
       <div className="eyebrow">
         {story.presentation.archiveLabel ?? story.title}
       </div>
@@ -80,44 +96,18 @@ export default function StoryPage() {
           </div>
         </>
       )}
-      <Navigation
-        back
-        backLabel={step.kind === "scene" ? "← Предыдущий этап" : "← Назад"}
-        next
-        disabled={!stepComplete(story, p, index)}
-        onBack={() =>
-          nav(
-            index
-              ? storyPath(index - 1, storyId)
-              : previousStoryId
-                ? storyPath(
-                    storyRegistry[previousStoryId].steps.length - 1,
-                    previousStoryId,
-                  )
-                : "/stories",
-          )
-        }
-        nextLabel={
-          step.kind === "materials"
-            ? "К карте невидимого →"
-            : step.kind === "map"
-              ? "К заключению →"
-              : last
-                ? nextStoryId
-                  ? "К следующей истории →"
-                  : "К невидимой статистике →"
-                : "Далее →"
-        }
-        onNext={() => {
-          if (last) {
-            send("STORY_COMPLETE");
-            nav(nextStoryId ? storyPath(0, nextStoryId) : "/statistics/1");
-          } else {
-            send("STORY_ADVANCE", { index });
-            nav(storyPath(index + 1, storyId));
-          }
-        }}
-      />
+      {step.kind === "scene" ? <>
+        <SceneNavigation start={range.start} end={range.end} total={total}
+          onPrevious={() => range.start > 1 ? send("READ_POSITION", { sceneId: step.id, position: range.start - 1 }) : goBack()}
+          onNext={() => range.end < total ? send("READ_POSITION", { sceneId: step.id, position: range.end + 1 }) : goForward()}
+          nextDisabled={range.end >= total && !stepComplete(story, p, index)} />
+        {range.end < total && stepComplete(story, p, index) &&
+          <button type="button" className="stage-shortcut" onClick={goForward}>К следующему этапу →</button>}
+      </> : <Navigation back next disabled={!stepComplete(story, p, index)}
+        onBack={goBack} onNext={goForward}
+        nextLabel={step.kind === "materials" ? "К карте невидимого →"
+          : step.kind === "map" ? "К заключению →"
+          : last ? nextStoryId ? "К следующей истории →" : "К невидимой статистике →" : "Далее →"} />}
     </div>
   );
 }

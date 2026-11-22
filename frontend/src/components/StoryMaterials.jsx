@@ -20,7 +20,12 @@ export default function StoryMaterials({ story, progress, onToggle }) {
         label="Изучено материалов"
       />
       {story.materials.map((m) => (
-        <section className="material" key={m.id}>
+        <section className="material" key={m.id} onKeyDown={event => {
+          if (event.key === "Escape" && progress.active === m.id) {
+            event.stopPropagation(); onToggle(m.id);
+            document.querySelector(`[aria-controls="material-${story.id}-${m.id}"]`)?.focus();
+          }
+        }}>
           <div className="material-heading">
             <div>
               <h2>{m.title}</h2>
@@ -37,7 +42,7 @@ export default function StoryMaterials({ story, progress, onToggle }) {
             onClick={() => onToggle(m.id)}
           >
             {progress.active === m.id
-              ? "Скрыть материал ↑"
+              ? "Закрыть материал ↑"
               : "Открыть материал ↓"}
           </button>
           {progress.active === m.id && (

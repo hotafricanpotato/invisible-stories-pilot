@@ -11,6 +11,7 @@ import {
 } from "react-router-dom";
 import { Provider, useExhibition } from "./state/Provider";
 import { allowedPath } from "./state/model";
+import { storyRegistry } from "./content/storyRegistry.js";
 import {
   Home,
   Quiz,
@@ -31,6 +32,13 @@ function App() {
   const cancel = useRef();
   const resetTrigger = useRef();
   const path = allowedPath(location.pathname, state);
+  const storyRoute = location.pathname.match(/^\/stories\/([^/]+)\/([^/]+)$/);
+  const activeStory = storyRoute && Object.hasOwn(storyRegistry, storyRoute[1])
+    ? storyRegistry[storyRoute[1]] : null;
+  const activeStep = activeStory?.steps.find(step => step.id === storyRoute[2]);
+  // The ending and statistics keep their existing presentation.
+  const storyTheme = path === location.pathname && activeStep && activeStep.kind !== "conclusion"
+    ? activeStory.presentation.theme ?? activeStory.id : undefined;
   useEffect(() => {
     if (path !== location.pathname) return;
     if (location.pathname !== "/")
@@ -48,7 +56,7 @@ function App() {
     if (resetOpen) cancel.current?.focus();
   }, [resetOpen]);
   return (
-    <>
+    <div className={storyTheme ? "app-shell story-shell" : "app-shell"} data-story-theme={storyTheme}>
       <a className="skip-link" href="#main">
         К содержанию
       </a>
@@ -124,7 +132,7 @@ function App() {
         id="main"
         ref={main}
         tabIndex="-1"
-        className={location.pathname === "/" ? "home-main" : "page-main"}
+        className={storyTheme ? "story-main" : location.pathname === "/" ? "home-main" : "page-main"}
       >
         {!storageAvailable && (
           <p role="status" className="note">
@@ -151,7 +159,7 @@ function App() {
         <span>Пилотная версия · Художественные реконструкции</span>
         <span>История Никиты и статистика · 2026</span>
       </footer>
-    </>
+    </div>
   );
 }
 createRoot(document.getElementById("root")).render(

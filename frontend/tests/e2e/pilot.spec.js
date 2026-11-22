@@ -52,10 +52,11 @@ async function assertText(page, text) {
 }
 async function revealAll(page) {
   let text = await page.locator("main").innerText();
-  const button = page.getByRole("button", { name: "Следующий фрагмент →", exact: true });
-  while (await button.count()) {
+  while (true) {
     const old = await page.getByRole("status").innerText();
-    await button.click();
+    const match = old.match(/Фрагмент (\d+)(?:–(\d+))? из (\d+)/);
+    if (Number(match[2] ?? match[1]) >= Number(match[3])) break;
+    await goNext(page);
     await expect(page.getByRole("status")).not.toHaveText(old);
     text += "\n" + await page.locator("main").innerText();
   }
@@ -121,6 +122,7 @@ test("complete production pilot, exact content, gates, reload, reset and no answ
     await next.click();
   }
   await expect(page).toHaveURL(/quiz\/complete$/);
+  await expect(page.locator(".story-shell")).toHaveCount(0);
   await page.getByRole("button", { name: "Перейти к истории →" }).click();
   await page.getByRole("button", { name: "Начать историю Никиты →" }).click();
   const scenes = [...story.stages[0].scenes, ...story.stages[1].scenes];
@@ -206,6 +208,7 @@ test("complete production pilot, exact content, gates, reload, reset and no answ
     page.getByRole("button", { name: "К заключению →" }),
   ).toBeEnabled();
   await page.getByRole("button", { name: "К заключению →" }).click();
+  await expect(page.locator(".story-shell")).toHaveCount(0);
   const end = story.stages[4];
   for (const f of end.factors) {
     await assertText(page, f.title);
@@ -216,6 +219,7 @@ test("complete production pilot, exact content, gates, reload, reset and no answ
   await page.getByRole("button", { name: "К невидимой статистике →" }).click();
   await page.goto("http://pilot.test/statistics/4");
   await expect(page).toHaveURL(/statistics\/1$/);
+  await expect(page.locator(".story-shell")).toHaveCount(0);
   for (const line of stats.russia.slice(0, 4))
     await assertText(page, line.text);
   for (const [name, val] of stats.values) {
@@ -322,11 +326,11 @@ test("single live reply, full chat, back, reload, keyboard and responsive layout
   await page.goto("http://pilot.test/stories/nikita/sunday");
   await goNext(page);
   for (const message of story.stages[0].scenes[1].messages) await assertText(page, message.text);
-  await expect(page.getByRole("button", { name: "Сцена прочитана", exact: true })).toBeDisabled();
+  await expect(page.locator(".scene-navigation button")).toHaveCount(2);
   await goNext(page);
   await expect(page).toHaveURL(/\/keys$/);
   await expect(page.locator(".live-dialogue")).toHaveCount(0);
-  const forward = page.getByRole("button", { name: "Следующий фрагмент →", exact: true });
+  const forward = page.getByRole("button", { name: "Далее →", exact: true });
   await forward.focus();
   await page.keyboard.down("Enter");
   await expect(page.locator(".live-dialogue")).toHaveCount(1);
@@ -337,7 +341,7 @@ test("single live reply, full chat, back, reload, keyboard and responsive layout
   await forward.click();
   await expect(page.locator(".live-dialogue")).toHaveCount(1);
   await expect(page.getByText("Никит, иди сюда. Поговорим.", { exact: true })).toHaveCount(0);
-  await page.getByRole("button", { name: "← Предыдущий фрагмент" }).click();
+  await page.getByRole("button", { name: "← Назад", exact: true }).click();
   await page.reload();
   await expect(page.getByRole("status")).toHaveText("Фрагмент 2 из 10");
   const saved = await page.evaluate(() => JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")));
@@ -351,7 +355,7 @@ test("single live reply, full chat, back, reload, keyboard and responsive layout
   }
   await page.setViewportSize(info.project.use.viewport);
   await revealAll(page);
-  await page.getByRole("button", { name: "← Предыдущий фрагмент" }).click();
+  await page.getByRole("button", { name: "← Назад", exact: true }).click();
   await expect(page.getByRole("button", { name: "Далее →", exact: true })).toBeEnabled();
   await page.screenshot({ path: `${artifacts}/single-dialogue-${info.project.name}.png`, fullPage: true });
 });
@@ -408,13 +412,9 @@ test("existing v1 session migrates in the browser without replaying visited scen
   ).toBeVisible();
   await page.getByRole("button", { name: "← Назад", exact: true }).click();
   await expect(page).toHaveURL(/\/football$/);
-  await expect(
-    page.getByRole("button", { name: "Сцена прочитана", exact: true }),
-  ).toBeDisabled();
+  await expect(page.getByRole("status")).toHaveText("Фрагмент 7 из 7");
   await page.reload();
-  await expect(
-    page.getByRole("button", { name: "Сцена прочитана", exact: true }),
-  ).toBeDisabled();
+  await expect(page.getByRole("status")).toHaveText("Фрагмент 7 из 7");
   const saved = await page.evaluate(() =>
     JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")),
   );
@@ -441,7 +441,7 @@ test("v2 reading migration, theme tokens, material close and mobile reading", as
   });
   await page.reload();
   await expect(page.getByRole("status")).toHaveText("Фрагмент 6 из 10");
-  await page.getByRole("button", { name: "← Предыдущий фрагмент" }).click();
+  await page.getByRole("button", { name: "← Назад", exact: true }).click();
   await page.reload();
   await expect(page.getByRole("status")).toHaveText("Фрагмент 5 из 10");
   await revealAll(page);
@@ -450,13 +450,13 @@ test("v2 reading migration, theme tokens, material close and mobile reading", as
   await goNext(page);
   await page.locator(".material").nth(1).getByRole("button", { name: "Открыть материал ↓" }).click();
   for (const [theme, accent] of [["nikita", "#9d5946"], ["liza", "#76647f"], ["ilya", "#65745b"]]) {
-    const value = await page.locator(".story-design").evaluate((el, theme) => {
+    const value = await page.locator(".story-shell").evaluate((el, theme) => {
       el.dataset.storyTheme = theme;
       return getComputedStyle(el).getPropertyValue("--story-accent").trim();
     }, theme);
     expect(value).toBe(accent);
   }
-  await page.locator(".story-design").evaluate(el => { el.dataset.storyTheme = "nikita"; });
+  await page.locator(".story-shell").evaluate(el => { el.dataset.storyTheme = "nikita"; });
   for (const width of [360, 390, 430, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     await noOverflow(page);
@@ -464,10 +464,54 @@ test("v2 reading migration, theme tokens, material close and mobile reading", as
   }
   await page.setViewportSize(info.project.use.viewport);
   await page.screenshot({ path: `${artifacts}/material-viewer-${info.project.name}.png`, fullPage: true });
-  await page.getByRole("button", { name: "Закрыть материал" }).focus();
+  await page.getByRole("button", { name: "Закрыть материал ↑", exact: true }).focus();
   await page.keyboard.press("Escape");
   await expect(page.locator(".material-viewer")).toHaveCount(0);
   await expect(page.locator(".material").nth(1).getByRole("button", { name: "Открыть материал ↓" })).toBeFocused();
   await page.reload();
   await expect(page.locator(".studied")).toHaveCount(1);
+});
+
+
+test("full-window themes, comfortable reading, single navigation and zoom", async ({ page }, info) => {
+  await finishQuiz(page);
+  await page.goto("http://pilot.test/stories/nikita/sunday");
+  for (const [theme, color] of [["nikita", "rgb(233, 217, 199)"], ["liza", "rgb(238, 230, 232)"], ["ilya", "rgb(231, 229, 217)"]]) {
+    await page.locator(".story-shell").evaluate((el, theme) => { el.dataset.storyTheme = theme; }, theme);
+    await expect(page.locator(".story-shell")).toHaveCSS("background-color", color);
+    for (const width of [360, 390, 430, 1280, 1920]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await noOverflow(page);
+      const metrics = await page.evaluate(() => {
+        const shell = document.querySelector(".story-shell");
+        const main = document.querySelector("main");
+        const reading = document.querySelector(".monologue-panel");
+        return { width: shell.getBoundingClientRect().width, height: shell.getBoundingClientRect().height,
+          headerColor: getComputedStyle(document.querySelector("header")).color,
+          mainWidth: main.getBoundingClientRect().width, font: parseFloat(getComputedStyle(reading.querySelector("p")).fontSize),
+          readingWidth: reading.getBoundingClientRect().width, background: getComputedStyle(shell).backgroundColor };
+      });
+      expect(metrics.width).toBe(width);
+      expect(metrics.height).toBeGreaterThanOrEqual(1000);
+      expect(metrics.mainWidth).toBeLessThanOrEqual(1200);
+      expect(metrics.font).toBeGreaterThanOrEqual(20);
+      expect(metrics.readingWidth).toBeLessThanOrEqual(850);
+      expect(metrics.headerColor).not.toBe("rgb(242, 238, 233)");
+    }
+  }
+  await page.locator(".story-shell").evaluate(el => { el.dataset.storyTheme = "nikita"; });
+  await page.setViewportSize(info.project.use.viewport);
+  await expect(page.locator(".scene-navigation button")).toHaveCount(2);
+  await expect(page.locator(".step-nav")).toHaveCount(0);
+  await page.locator("body").evaluate(el => { el.style.zoom = "2"; });
+  await noOverflow(page);
+  await expect(page.getByRole("button", { name: "Далее →", exact: true })).toBeVisible();
+  await page.locator("body").evaluate(el => { el.style.zoom = "1"; });
+  await page.screenshot({ path: `${artifacts}/story-environment-${info.project.name}.png`, fullPage: true });
+  await goNext(page);
+  await expect(page).toHaveURL(/messages_dima$/);
+  await page.getByRole("button", { name: "← Назад", exact: true }).click();
+  await expect(page).toHaveURL(/sunday$/);
+  await page.reload();
+  await expect(page.locator(".story-shell")).toHaveCSS("background-color", "rgb(233, 217, 199)");
 });

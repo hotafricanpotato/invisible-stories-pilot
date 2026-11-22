@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import SceneArtwork from "./story/SceneArtwork";
 import LiveDialogue from "./story/LiveDialogue";
 import MonologuePanel from "./story/MonologuePanel";
-import SceneNavigation from "./story/SceneNavigation";
 import { sceneFragments, fragmentRange } from "../content/storyRegistry.js";
 export function Photo({ art, compact = false }) {
   if (!art) return null;
@@ -86,9 +85,6 @@ export function Scene({ scene, story, position, onPosition }) {
             <Fragment key={i} part={part} character={story.character} />)}
       </div>
     </div>
-    <SceneNavigation start={range.start} end={range.end} total={parts.length}
-      onPrevious={() => onPosition(range.start - 1)}
-      onNext={() => onPosition(range.end + 1)} />
   </>;
 }
 export function MaterialContent({ material: m, story }) {
