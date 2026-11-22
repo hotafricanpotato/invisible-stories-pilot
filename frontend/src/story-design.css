@@ -173,3 +173,19 @@
   .story-shell .material-viewer .material-content > .chat { border-radius: 16px; padding: 18px; }
   .story-shell .success { padding: 18px; }
 }
+/* Liza-only missing artwork; no substitute scenes or generated pictures. */
+.story-shell .artwork-placeholder {
+  min-height: 220px; display: flex; flex-direction: column; justify-content: center;
+  background: var(--story-surface); padding: clamp(24px, 4vw, 48px);
+}
+.story-shell .artwork-placeholder p { max-width: 42ch; font-family: Georgia, serif; color: var(--story-muted); }
+.selection-placeholder { display: flex; align-items: center; justify-content: center; min-height: 220px; padding: 24px; background: #eee6e8; color: #76647f; }
+.story-shell .album-photos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.story-shell .photo-album h3 { font-size: 26px; }
+.story-shell .photo-album figure { margin: 0; min-width: 0; }
+.story-shell .album-placeholder { background: var(--story-surface); padding: 24px; min-height: 260px; }
+.story-shell .album-placeholder p { font-size: 18px; }
+.story-shell .photo-album figcaption { font-size: 17px; padding-block: 14px; line-height: 1.6; color: var(--story-ink); }
+.story-shell .album-publication { background: var(--story-surface); padding: 24px; margin-top: 20px; }
+.story-shell .story-closing { margin-top: 32px; }
+@media (max-width: 640px) { .story-shell .album-photos { grid-template-columns: minmax(0, 1fr); } }

@@ -1,5 +1,9 @@
 export default function SceneArtwork({ art }) {
   if (!art) return null;
+  if (art.placeholder) return <figure className="scene-artwork artwork-placeholder" role="img" aria-label={`Временная иллюстрация: ${art.label}`}>
+    <span className="eyebrow">Временная иллюстрация</span>
+    <p>{art.label}</p>
+  </figure>;
   return <figure className="scene-artwork">
     <picture>
       {art.mobileSrc && <source media="(max-width: 640px)" srcSet={art.mobileSrc} />}

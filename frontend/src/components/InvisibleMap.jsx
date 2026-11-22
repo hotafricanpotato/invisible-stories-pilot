@@ -4,7 +4,7 @@ export default function InvisibleMap({ story, progress, onAnswer, onReveal }) {
   const allAnswered = qs.every((q) => progress.answers[q.id]);
   return (
     <>
-      <h1>Карта невидимого</h1>
+      <h1>{story.presentation.mapTitle ?? "Карта невидимого"}</h1>
       <p>{story.presentation.mapIntroduction}</p>
       <p className="caption">
         Здесь нет оценки вашей личности. Важно разобраться в ситуации.

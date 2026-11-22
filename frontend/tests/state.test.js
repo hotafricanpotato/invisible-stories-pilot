@@ -1,14 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  initialState,
-  reducer,
-  restore,
-  allowedPath,
-  storyPath,
-  fragmentCount,
-  createExhibitionModel,
-} from "../src/state/model.js";
+import { createExhibitionModel } from "../src/state/model.js";
 import {
   storyRegistry,
   createStoryRegistry,
@@ -23,6 +15,8 @@ const rawStory = JSON.parse(
   ),
 );
 const story = storyRegistry.nikita;
+// Run the original pilot regression suite with its original single-story registry.
+const { initialState, reducer, restore, allowedPath, storyPath, fragmentCount } = createExhibitionModel(createStoryRegistry([story]));
 const apply = (s, type, rest = {}) =>
   reducer(s, { type, storyId: "nikita", ...rest });
 const quizDone = (model = { initialState, reducer }) => {
@@ -190,7 +184,7 @@ test("v1 migration retains completed pilot, quiz, materials, map and statistics"
     revealed: true,
   };
   const b = restore(JSON.stringify(legacy));
-  assert.equal(b.version, 3);
+  assert.equal(b.version, 4);
   assert.deepEqual(b.quiz, legacy.quiz);
   assert.equal(b.stories.nikita.completed, true);
   assert.deepEqual(b.stories.nikita.opened, legacy.nikita.opened);

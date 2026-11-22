@@ -1,3 +1,4 @@
+import { exhibitionConfig } from "../content/exhibitionConfig.js";
 import { useNavigate, useParams } from "react-router-dom";
 import { storyRegistry, sceneFragments, fragmentRange } from "../content/storyRegistry.js";
 import { useExhibition } from "../state/Provider";
@@ -22,14 +23,15 @@ export default function StoryPage() {
   const last = index === story.steps.length - 1;
   const previousStoryId =
     Object.keys(storyRegistry)[Object.keys(storyRegistry).indexOf(storyId) - 1];
-  const nextStoryId =
-    Object.keys(storyRegistry)[Object.keys(storyRegistry).indexOf(storyId) + 1];
+  const nextStoryId = Object.keys(storyRegistry).find(id => id !== storyId && !state.stories[id].completed);
+  const afterStoriesPath = exhibitionConfig.postStoriesPath;
+  const nextStoryLabel = nextStoryId ? `К истории ${storyRegistry[nextStoryId].presentation.materialsCharacterName ?? storyRegistry[nextStoryId].character} →` : exhibitionConfig.postStoriesLabel;
   const goBack = () => nav(index ? storyPath(index - 1, storyId)
-    : previousStoryId ? storyPath(storyRegistry[previousStoryId].steps.length - 1, previousStoryId) : "/stories");
+    : previousStoryId && exhibitionConfig.storyAccess !== "independent" ? storyPath(storyRegistry[previousStoryId].steps.length - 1, previousStoryId) : "/stories");
   const goForward = () => {
     if (last) {
       send("STORY_COMPLETE");
-      nav(nextStoryId ? storyPath(0, nextStoryId) : "/statistics/1");
+      nav(nextStoryId ? storyPath(state.stories[nextStoryId].unlocked, nextStoryId) : afterStoriesPath);
     } else {
       send("STORY_ADVANCE", { index });
       nav(storyPath(index + 1, storyId));
@@ -88,14 +90,17 @@ export default function StoryPage() {
               ))}
             </div>
           )}
-          <div className="ending">
+          {end.final_text && <div className="ending">
             <Paragraphs text={end.final_text} />
             {end.final_emphasis && (
               <p className="emphasis">{end.final_emphasis}</p>
             )}
-          </div>
+          </div>}
         </>
       )}
+      {step.kind === "closing" && <section className="ending story-closing">
+        <h1>{step.content.title}</h1><Paragraphs text={step.content.text} />
+      </section>}
       {step.kind === "scene" ? <>
         <SceneNavigation start={range.start} end={range.end} total={total}
           onPrevious={() => range.start > 1 ? send("READ_POSITION", { sceneId: step.id, position: range.start - 1 }) : goBack()}
@@ -107,7 +112,7 @@ export default function StoryPage() {
         onBack={goBack} onNext={goForward}
         nextLabel={step.kind === "materials" ? "К карте невидимого →"
           : step.kind === "map" ? "К заключению →"
-          : last ? nextStoryId ? "К следующей истории →" : "К невидимой статистике →" : "Далее →"} />}
+          : last ? nextStoryLabel : "Далее →"} />}
     </div>
   );
 }

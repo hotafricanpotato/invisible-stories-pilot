@@ -42,3 +42,16 @@ print('PASS exact statistics: 4 screens, values, datasets, limitations, sources 
 for image in (ROOT / 'assets/nikita').glob('*.jpg'):
     assert image.read_bytes() == (ROOT / 'frontend/public/assets/nikita' / image.name).read_bytes()
 print('PASS all 5 image copies are byte-identical')
+
+# Preserve the user-supplied DOCX and verify the extraction fixture used by Liza tests.
+from zipfile import ZipFile
+from xml.etree import ElementTree as ET
+source = ROOT / 'frontend/docs/sources/liza-scenario-2.0.docx'
+fixture = json.loads((ROOT / 'frontend/tests/fixtures/liza-v2-source.json').read_text())
+assert hashlib.sha256(source.read_bytes()).hexdigest() == fixture['sha256']
+with ZipFile(source) as archive:
+    document = ET.fromstring(archive.read('word/document.xml'))
+ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+paragraphs = [''.join(node.text or '' for node in p.findall('.//w:t', ns)) for p in document.findall('./w:body/w:p', ns)]
+assert paragraphs == fixture['paragraphs']
+print('PASS original Liza DOCX and exact source-paragraph extraction (scenario 2.0)')

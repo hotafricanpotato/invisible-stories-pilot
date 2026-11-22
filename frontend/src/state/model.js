@@ -18,12 +18,14 @@ const count = (value, max) =>
   Number.isInteger(value) ? Math.max(1, Math.min(max, value)) : 1;
 export const quizPath = (i) => `/quiz/${i + 1}`;
 
-export function createExhibitionModel(registry) {
+export function createExhibitionModel(registry, options = {}) {
   const ids = Object.keys(registry);
   const initialState = () => ({
-    version: 3,
+    version: 4,
     contentVersion: exhibitionConfig.contentVersion,
     cursor: "/",
+    legacyStoryAccess: [],
+    legacyStatsAccess: false,
     quiz: { answers: {}, completed: false },
     stories: Object.fromEntries(
       ids.map((id) => [id, blankStory(registry[id])]),
@@ -41,10 +43,11 @@ export function createExhibitionModel(registry) {
     `/stories/${id}/${registry[id].steps[index].id}`;
   const canEnter = (s, id) =>
     s.quiz.completed &&
-    ids
+    (options.storyAccess === "independent" || s.legacyStoryAccess.includes(id) || ids
       .slice(0, ids.indexOf(id))
-      .every((previous) => s.stories[previous].completed);
+      .every((previous) => s.stories[previous].completed));
   const allStoriesComplete = (s) => ids.every((id) => s.stories[id].completed);
+  const canEnterStats = s => allStoriesComplete(s) || (s.quiz.completed && s.legacyStatsAccess);
   const fragmentCount = (progress, scene) =>
     count(progress.revealedFragments[scene.id], sceneFragments(scene).length);
   const stepComplete = (story, progress, index) => {
@@ -94,13 +97,13 @@ export function createExhibitionModel(registry) {
     if (a.type === "STATS_PATCH")
       return { ...s, stats: { ...s.stats, ...a.value } };
     if (a.type === "STATS_ADVANCE")
-      return allStoriesComplete(s) &&
+      return canEnterStats(s) &&
         a.index === s.stats.unlocked &&
         a.index < 3
         ? { ...s, stats: { ...s.stats, unlocked: a.index + 1 } }
         : s;
     if (a.type === "STATS_COMPLETE")
-      return allStoriesComplete(s) && s.stats.unlocked === 3
+      return canEnterStats(s) && s.stats.unlocked === 3
         ? { ...s, stats: { ...s.stats, completed: true } }
         : s;
     if (!Object.hasOwn(registry, a.storyId)) return s;
@@ -211,7 +214,7 @@ export function createExhibitionModel(registry) {
         : storyPath(s.stories[id].unlocked, id);
     }
     if (match) return "/stories";
-    if (!allStoriesComplete(s)) {
+    if (!canEnterStats(s)) {
       const first = ids.find((id) => !s.stories[id].completed);
       return storyPath(s.stories[first].unlocked, first);
     }
@@ -228,7 +231,7 @@ export function createExhibitionModel(registry) {
     try {
       const input = JSON.parse(raw);
       if (
-        ![1, 2, 3].includes(input?.version) ||
+        ![1, 2, 3, 4].includes(input?.version) ||
         input.contentVersion !== exhibitionConfig.contentVersion
       )
         return initialState();
@@ -239,6 +242,11 @@ export function createExhibitionModel(registry) {
       b.quiz.completed =
         input.quiz?.completed === true &&
         Object.keys(b.quiz.answers).length === 5;
+      if (b.quiz.completed) {
+        b.legacyStoryAccess = input.version < 4 && ids.includes("liza") && !input.stories?.liza
+          ? ids.filter(id => id === "nikita")
+          : (Array.isArray(input.legacyStoryAccess) ? input.legacyStoryAccess : []).filter(id => ids.includes(id));
+      }
       for (const id of ids) {
         const story = registry[id];
         const saved =
@@ -274,7 +282,7 @@ export function createExhibitionModel(registry) {
             input.version === 1 && canEnter(b, id) && index <= p.unlocked
               ? max
               : count(saved.revealedFragments?.[scene.id], max);
-          p.currentFragments[scene.id] = input.version === 3
+          p.currentFragments[scene.id] = input.version >= 3
             ? count(saved.currentFragments?.[scene.id], p.revealedFragments[scene.id])
             : p.revealedFragments[scene.id];
         }
@@ -296,13 +304,16 @@ export function createExhibitionModel(registry) {
             : story.steps[p.unlocked].id;
       }
       const stats = input.stats ?? {};
+      b.legacyStatsAccess = b.quiz.completed && b.stories.nikita?.completed === true && (
+        (input.version < 4 && ids.includes("liza") && !input.stories?.liza) || input.legacyStatsAccess === true
+      );
       b.stats.unlocked =
-        allStoriesComplete(b) && Number.isInteger(stats.unlocked)
+        canEnterStats(b) && Number.isInteger(stats.unlocked)
           ? Math.max(0, Math.min(3, stats.unlocked))
           : 0;
       b.stats.completed =
         stats.completed === true &&
-        allStoriesComplete(b) &&
+        canEnterStats(b) &&
         b.stats.unlocked === 3;
       b.stats.filter =
         stats.filter === "Только нефизические"
@@ -348,4 +359,4 @@ export const {
   fragmentCount,
   stepComplete,
   allStoriesComplete,
-} = createExhibitionModel(storyRegistry);
+} = createExhibitionModel(storyRegistry, exhibitionConfig);

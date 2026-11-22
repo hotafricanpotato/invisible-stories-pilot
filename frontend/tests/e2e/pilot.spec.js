@@ -1,79 +1,33 @@
-import { test as base, expect } from "@playwright/test";
+import { expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-const root = path.resolve("dist");
+import { test, goNext, noOverflow, assertText, revealAll, finishQuiz } from "./support.js";
+import { reducer, restore } from "../../src/state/model.js";
+import { storyRegistry, sceneFragments } from "../../src/content/storyRegistry.js";
 const artifacts = process.env.ARTIFACT_DIR || path.resolve("../../work");
 const quiz = JSON.parse(await readFile("src/content/initialQuiz.json", "utf8"));
 const story = JSON.parse(await readFile("src/content/nikita.json", "utf8"));
 const stats = JSON.parse(await readFile("src/content/statistics.json", "utf8"));
-// Serve the real production bundle inside the browser runner. No preview relay,
-// external server, or external network is required for these tests.
-const test = base.extend({
-  page: async ({ page }, use) => {
-    await page.route("http://pilot.test/**", async (route) => {
-      const url = new URL(route.request().url());
-      const asset = url.pathname.startsWith("/assets/");
-      const file = asset
-        ? path.join(root, url.pathname)
-        : path.join(root, "index.html");
-      try {
-        const body = await readFile(file);
-        const ext = path.extname(file);
-        await route.fulfill({
-          body,
-          contentType:
-            {
-              ".html": "text/html",
-              ".js": "application/javascript",
-              ".css": "text/css",
-              ".jpg": "image/jpeg",
-              ".webp": "image/webp",
-            }[ext] || "application/octet-stream",
-        });
-      } catch {
-        await route.fulfill({ status: 404, body: "Not found" });
-      }
-    });
-    await use(page);
-  },
-});
-const goNext = (page) =>
-  page.getByRole("button", { name: "Далее →", exact: true }).click();
-async function noOverflow(page) {
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
-}
-async function assertText(page, text) {
-  for (const p of text.split("\n\n"))
-    await expect(page.locator("main")).toContainText(p);
-}
-async function revealAll(page) {
-  let text = await page.locator("main").innerText();
-  while (true) {
-    const old = await page.getByRole("status").innerText();
-    const match = old.match(/Фрагмент (\d+)(?:–(\d+))? из (\d+)/);
-    if (Number(match[2] ?? match[1]) >= Number(match[3])) break;
-    await goNext(page);
-    await expect(page.getByRole("status")).not.toHaveText(old);
-    text += "\n" + await page.locator("main").innerText();
+// This regression explicitly starts with Liza completed, using real reducer actions.
+async function completeLizaForNikitaRegression(page) {
+  const saved=await page.evaluate(()=>sessionStorage.getItem("invisible-stories:pilot:v1"));
+  let s=restore(saved);
+  const definition=storyRegistry.liza;
+  for(let i=0;i<definition.steps.length;i++) {
+    const step=definition.steps[i];
+    if(step.kind==="scene") while(s.stories.liza.revealedFragments[step.id]<sceneFragments(step.scene).length)
+      s=reducer(s,{type:"REVEAL_FRAGMENT",storyId:"liza",sceneId:step.id});
+    if(step.kind==="materials") for(const m of definition.materials) s=reducer(s,{type:"MATERIAL",storyId:"liza",id:m.id});
+    if(step.kind==="map") {
+      for(const q of definition.questions) s=reducer(s,{type:"MAP_ANSWER",storyId:"liza",id:q.id,value:q.correct});
+      s=reducer(s,{type:"MAP_REVEAL",storyId:"liza"});
+    }
+    if(i<definition.steps.length-1) s=reducer(s,{type:"STORY_ADVANCE",storyId:"liza",index:i});
   }
-  return text;
-}
-async function finishQuiz(page) {
-  await page.goto("http://pilot.test/quiz/1");
-  for (let i = 0; i < 5; i++) {
-    await expect(page).toHaveURL(new RegExp(`/quiz/${i + 1}$`));
-    await page.getByRole("radio").nth(1).check();
-    await page
-      .getByRole("button", {
-        name: i === 4 ? "Завершить проверку →" : "Далее →",
-        exact: true,
-      })
-      .click();
-  }
+  s=reducer(s,{type:"STORY_COMPLETE",storyId:"liza"});
+  expect(s.stories.liza.completed).toBe(true);
+  await page.evaluate(s=>sessionStorage.setItem("invisible-stories:pilot:v1",JSON.stringify(s)),s);
+  await page.reload();
 }
 test("complete production pilot, exact content, gates, reload, reset and no answer transmission", async ({
   page,
@@ -123,6 +77,7 @@ test("complete production pilot, exact content, gates, reload, reset and no answ
   }
   await expect(page).toHaveURL(/quiz\/complete$/);
   await expect(page.locator(".story-shell")).toHaveCount(0);
+  await completeLizaForNikitaRegression(page);
   await page.getByRole("button", { name: "Перейти к истории →" }).click();
   await page.getByRole("button", { name: "Начать историю Никиты →" }).click();
   const scenes = [...story.stages[0].scenes, ...story.stages[1].scenes];
@@ -429,7 +384,7 @@ test("existing v1 session migrates in the browser without replaying visited scen
   const saved = await page.evaluate(() =>
     JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")),
   );
-  expect(saved.version).toBe(3);
+  expect(saved.version).toBe(4);
   expect(saved.quiz).toEqual(legacy.quiz);
   expect(saved.stories.nikita.answers).toEqual(legacy.nikita.answers);
   expect(saved.stories.nikita.currentStepId).toBe("football");

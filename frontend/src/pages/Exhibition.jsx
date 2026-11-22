@@ -43,7 +43,7 @@ export function Home() {
               : "Продолжить выставку →"}
           </button>
           <p className="caption">
-            Одна история. Несколько точек зрения.
+            Две истории. Несколько точек зрения.
             <br />
             То, что легко не заметить.
           </p>
@@ -69,8 +69,8 @@ export function Home() {
           {[
             [
               "01 / УСЛЫШАТЬ",
-              "История Никиты",
-              "Познакомьтесь с героем и взгляните на его повседневную жизнь.",
+              "Истории Лизы и Никиты",
+              "Познакомьтесь с героями и взгляните на их повседневную жизнь.",
             ],
             [
               "02 / ЗАМЕТИТЬ",
@@ -196,15 +196,15 @@ export function Selection() {
       <div className="eyebrow">ЛИЧНЫЙ АРХИВ / ДОСТУПНОЕ ДЕЛО</div>
       <h1>Истории · тестовая версия</h1>
       <p>
-        Для первого пользовательского тестирования доступна история Никиты. Две
-        другие истории находятся в разработке.
+        Для тестирования доступны истории Лизы и Никиты. Их можно проходить отдельно.
+        Порядок полной выставки: Лиза → Никита → Илья.
       </p>
       {Object.values(storyRegistry).map((story) => (
         <article className="story-card" key={story.id}>
-          <img
-            src={story.presentation.selection?.cover}
-            alt={story.presentation.selection?.alt ?? story.title}
-          />
+          {story.presentation.selection?.cover ? <img
+            src={story.presentation.selection.cover}
+            alt={story.presentation.selection.alt ?? story.title}
+          /> : <div className="selection-placeholder" role="img" aria-label="Временная обложка истории Лизы">Временная иллюстрация</div>}
           <div>
             <div className="eyebrow">{story.presentation.selection?.tag}</div>
             <h2>{story.title}</h2>
@@ -225,7 +225,7 @@ export function Selection() {
         </article>
       ))}
       <p className="caption">
-        Истории 02 и 03 будут добавлены в полной версии выставки.
+        История Ильи и итоговый тест пока не подключены.
       </p>
       <button onClick={() => nav("/quiz/complete")}>← Назад</button>
     </>

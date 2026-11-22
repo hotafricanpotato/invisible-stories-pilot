@@ -1,5 +1,6 @@
 import { Paragraphs } from "./UI";
 import { useEffect } from "react";
+import PhotoAlbum from "./materials/PhotoAlbum";
 import SceneArtwork from "./story/SceneArtwork";
 import LiveDialogue from "./story/LiveDialogue";
 import MonologuePanel from "./story/MonologuePanel";
@@ -56,6 +57,7 @@ export function Chat({ messages, title, character }) {
   );
 }
 function Fragment({ part, character }) {
+  if (part.kind === "chat") return <Chat messages={part.messages} title={part.title} character={character} />;
   if (part.kind === "message")
     return <Message message={part.message} character={character} />;
   if (part.kind === "monologue") return <Monologue text={part.text} />;
@@ -70,7 +72,7 @@ export function Scene({ scene, story, position, onPosition }) {
   return <>
     <h1>{scene.title}</h1>
     {scene.time && <p className="caption">{scene.time}</p>}
-    <div className={scene.type === "messages" ? "story-chat-layout" : "story-scene-layout"}>
+    <div className={scene.type === "messages" || current[0]?.kind === "chat" ? "story-chat-layout" : "story-scene-layout"}>
       <SceneArtwork art={story.presentation.artwork?.[scene.id]} />
       <div className="scene-reading" aria-live="polite" aria-atomic="true">
         {scene.type === "messages" ? <>
@@ -91,6 +93,8 @@ export function MaterialContent({ material: m, story }) {
   const p = story.presentation;
   return (
     <div className="material-content">
+      {m.time && <p className="caption">{m.time}</p>}
+      {m.type === "album" && <PhotoAlbum material={m} />}
       {m.type === "chat" && (
         <Chat
           messages={m.messages}

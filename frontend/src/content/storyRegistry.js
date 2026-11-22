@@ -1,19 +1,21 @@
 import { exhibitionConfig } from "./exhibitionConfig.js";
+import liza from "./liza.json" with { type: "json" };
+import lizaPresentation from "./lizaPresentation.js";
 import nikita from "./nikita.json" with { type: "json" };
 
 // Presentation belongs to the registry; approved scenario JSON stays untouched.
 const nikitaPresentation = {
-  archiveLabel: "ИСТОРИЯ 01 / КОГДА ВСЁ СПОКОЙНО",
+  archiveLabel: "ИСТОРИЯ 02 / КОГДА ВСЁ СПОКОЙНО",
   selection: {
     cover: "/assets/nikita/cover.jpg",
     alt: "Архивный коллаж истории Никиты",
-    tag: "ДЕЛО 01 / НИКИТА, 14 ЛЕТ",
+    tag: "ДЕЛО 02 / НИКИТА, 14 ЛЕТ",
     description:
       "Один подросток, четыре повседневные сцены и то, что остаётся за кадром.",
     startLabel: "Начать историю Никиты →",
     continueLabel: "Продолжить историю Никиты →",
   },
-  conclusionLabel: "ИСТОРИЯ 01 / ЗАКЛЮЧЕНИЕ",
+  conclusionLabel: "ИСТОРИЯ 02 / ЗАКЛЮЧЕНИЕ",
   chatTitle: "Диалог с Димой",
   materialsCharacterName: "Никиты",
   mapIntroduction:
@@ -109,6 +111,7 @@ export function defineStory(data, presentation = {}) {
       }));
     if (stage.materials) return [{ id: "materials", kind: "materials" }];
     if (stage.questions) return [{ id: "map", kind: "map" }];
+    if (stage.kind === "closing") return [{ id: stage.id, kind: "closing", content: stage }];
     if (stage.id === "conclusion")
       return [{ id: "conclusion", kind: "conclusion" }];
     throw new Error(`Unsupported stage: ${stage.id}`);
@@ -132,6 +135,7 @@ export function createStoryRegistry(stories) {
 }
 // Add new approved definitions here only after their full scenarios are supplied.
 const approvedDefinitions = createStoryRegistry([
+  defineStory(liza, lizaPresentation),
   defineStory(nikita, nikitaPresentation),
 ]);
 export const storyRegistry = createStoryRegistry(
@@ -147,7 +151,7 @@ export function fragmentRange(scene, position, mode) {
   const parts = sceneFragments(scene);
   if (scene.type === "messages") return { start: 1, end: parts.length };
   let start = position, end = position;
-  if (scene.type !== "dialogue" || mode === "mixed") {
+  if (scene.type !== "fragments" && (scene.type !== "dialogue" || mode === "mixed")) {
     if (parts[position - 1]?.kind === "message") {
       while (start > 1 && parts[start - 2].kind === "message") start--;
       while (end < parts.length && parts[end].kind === "message") end++;
