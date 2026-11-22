@@ -36,8 +36,8 @@ function App() {
   const activeStory = storyRoute && Object.hasOwn(storyRegistry, storyRoute[1])
     ? storyRegistry[storyRoute[1]] : null;
   const activeStep = activeStory?.steps.find(step => step.id === storyRoute[2]);
-  // The ending and statistics keep their existing presentation.
-  const storyTheme = path === location.pathname && activeStep && activeStep.kind !== "conclusion"
+  // Story conclusions share the story theme; statistics remain a separate dark exhibition.
+  const storyTheme = path === location.pathname && activeStep
     ? activeStory.presentation.theme ?? activeStory.id : undefined;
   useEffect(() => {
     if (path !== location.pathname) return;

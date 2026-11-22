@@ -40,7 +40,7 @@ export default function StoryPage() {
     ? fragmentRange(step.scene, position, story.presentation.sceneModes?.[step.id]) : null;
   const total = step.kind === "scene" ? sceneFragments(step.scene).length : 0;
   return (
-    <div className={step.kind !== "conclusion" ? "story-design" : undefined}>
+    <div className="story-design">
       <div className="eyebrow">
         {story.presentation.archiveLabel ?? story.title}
       </div>

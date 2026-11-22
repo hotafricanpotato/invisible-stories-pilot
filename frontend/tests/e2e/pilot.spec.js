@@ -170,6 +170,12 @@ test("complete production pilot, exact content, gates, reload, reset and no answ
     for (const item of m.items || []) await assertText(page, item);
     for (const key of ["monologue", "transcript", "status", "highlight"])
       if (m[key]) await assertText(page, m[key]);
+    if (i === 0) {
+      await expect(page.locator(".material-viewer .chat")).toHaveCSS("background-color", "rgb(243, 231, 216)");
+      await expect(page.locator(".material-viewer .chat .message-row")).toHaveCount(m.messages.length);
+      await noOverflow(page);
+      await page.screenshot({ path: `${artifacts}/polish-chat-${info.project.name}.png`, fullPage: true });
+    }
     if (i < 2)
       await expect(
         page.getByRole("button", { name: "К карте невидимого →" }),
@@ -202,13 +208,18 @@ test("complete production pilot, exact content, gates, reload, reset and no answ
   await page.getByRole("button", { name: "Раскрыть связи" }).click();
   for (const q of story.stages[3].questions)
     await assertText(page, q.explanation);
+  await expect(page.locator(".success")).toHaveCSS("background-color", "rgb(243, 231, 216)");
+  await page.screenshot({ path: `${artifacts}/polish-map-${info.project.name}.png`, fullPage: true });
   await expect(page.getByRole("radio")).toHaveCount(0);
   await page.reload();
   await expect(
     page.getByRole("button", { name: "К заключению →" }),
   ).toBeEnabled();
   await page.getByRole("button", { name: "К заключению →" }).click();
-  await expect(page.locator(".story-shell")).toHaveCount(0);
+  await expect(page.locator(".story-shell")).toHaveCSS("background-color", "rgb(233, 217, 199)");
+  await expect(page.locator(".factor-grid article").first()).toHaveCSS("background-color", "rgb(243, 231, 216)");
+  await noOverflow(page);
+  await page.screenshot({ path: `${artifacts}/polish-conclusion-${info.project.name}.png`, fullPage: true });
   const end = story.stages[4];
   for (const f of end.factors) {
     await assertText(page, f.title);

@@ -1,4 +1,4 @@
-/* Story themes are applied to the full app shell, never to quiz/statistics/ending. */
+/* Story themes are applied to the full app shell, never to quiz/statistics/pilot completion. */
 [data-story-theme="nikita"] {
   --story-bg: #e9d9c7; --story-surface: #f3e7d8; --story-light: #d8b8a2;
   --story-mid: #b9785d; --story-accent: #9d5946; --story-ink: #302824; --story-muted: #66564d;
@@ -124,3 +124,52 @@
   .story-shell .step-nav { gap: 10px; }
 }
 @media (prefers-reduced-motion: reduce) { .story-shell * { transition: none; scroll-behavior: auto; } }
+
+/* Final Nikita polish: a distinct archived phone conversation, not a full device mockup. */
+.story-shell .material-viewer .material-content > .chat {
+  max-width: 620px; margin: 16px 0 28px;
+  padding: clamp(18px, 3vw, 30px);
+  background: var(--story-surface);
+  border: 1px solid var(--story-light); border-radius: 22px;
+}
+.story-shell .material-viewer .material-content > .chat::before {
+  content: ""; display: block; width: 42px; height: 4px;
+  margin: -4px auto 24px; border-radius: 4px; background: var(--story-light);
+}
+.story-shell .material-viewer .chat .chat-title {
+  margin-bottom: 24px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--story-light);
+  font-family: Georgia, serif; font-size: 22px;
+}
+.story-shell .material-viewer .chat .message-row:not(.mine) .bubble {
+  background: var(--story-bg);
+}
+.story-shell .success {
+  max-width: 68ch; margin: 28px 0; padding: 20px 24px;
+  background: var(--story-surface); color: var(--story-ink);
+  border: 0; border-left: 2px solid var(--story-accent);
+  font-size: clamp(18px, 1.5vw, 21px); line-height: 1.65;
+}
+.story-shell .lead { max-width: 64ch; }
+.story-shell .factor-grid { gap: 24px; margin-block: 32px; }
+.story-shell .factor-grid article {
+  background: var(--story-surface); border: 0; border-radius: 0;
+  padding: clamp(20px, 3vw, 32px);
+}
+.story-shell .factor-grid h2 { font-size: clamp(23px, 2vw, 28px); font-weight: 500; }
+.story-shell .factor-grid p { color: var(--story-ink); font-size: clamp(18px, 1.5vw, 21px); }
+.story-shell .factor-grid .eyebrow { color: var(--story-accent); }
+.story-shell .ending {
+  max-width: 64ch; margin: 36px 0 28px; padding: 0;
+  background: none; border: 0; border-radius: 0;
+}
+.story-shell .ending p { font-size: clamp(19px, 1.6vw, 22px); line-height: 1.7; }
+.story-shell .ending .emphasis {
+  color: var(--story-accent); font-family: Georgia, serif;
+  font-size: clamp(23px, 2vw, 28px); font-weight: 500;
+  margin-top: 24px; padding-left: 20px; border-left: 2px solid var(--story-accent);
+}
+@media (max-width: 640px) {
+  .story-shell .material-viewer .material-content > .chat { border-radius: 16px; padding: 18px; }
+  .story-shell .success { padding: 18px; }
+}
