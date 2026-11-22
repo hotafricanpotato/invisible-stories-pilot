@@ -20,6 +20,9 @@ const nikitaPresentation = {
     "Вернитесь к трём эпизодам истории Никиты. Выберите наиболее обоснованную интерпретацию каждого из них.",
   noteLabel: "ЗАМЕТКИ / ТЕЛЕФОН НИКИТЫ",
   voiceLabel: "НЕОТПРАВЛЕННОЕ ГОЛОСОВОЕ / МАМЕ",
+  theme: "nikita",
+  sceneModes: { football: "mixed" },
+  temporaryArtwork: true,
   artwork: {
     sunday: {
       src: "/assets/nikita/sunday.jpg",
@@ -34,10 +37,10 @@ const nikitaPresentation = {
       height: 480,
     },
     keys: {
-      src: "/assets/nikita/keys.jpg",
+      src: "/assets/story-design/nikita-keys-scene-desktop.webp",
       label: "АРХИВ / СРЕДА",
-      width: 602,
-      height: 610,
+      width: 1920,
+      height: 1080,
     },
     football: {
       src: "/assets/nikita/football.jpg",
@@ -138,3 +141,17 @@ export const storyRegistry = createStoryRegistry(
     return approvedDefinitions[id];
   }),
 );
+
+// Source indices stay stable for migration; adjacent chat messages form one UI step.
+export function fragmentRange(scene, position, mode) {
+  const parts = sceneFragments(scene);
+  if (scene.type === "messages") return { start: 1, end: parts.length };
+  let start = position, end = position;
+  if (scene.type !== "dialogue" || mode === "mixed") {
+    if (parts[position - 1]?.kind === "message") {
+      while (start > 1 && parts[start - 2].kind === "message") start--;
+      while (end < parts.length && parts[end].kind === "message") end++;
+    }
+  }
+  return { start, end };
+}

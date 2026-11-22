@@ -27,6 +27,7 @@ const test = base.extend({
               ".js": "application/javascript",
               ".css": "text/css",
               ".jpg": "image/jpeg",
+              ".webp": "image/webp",
             }[ext] || "application/octet-stream",
         });
       } catch {
@@ -50,15 +51,15 @@ async function assertText(page, text) {
     await expect(page.locator("main")).toContainText(p);
 }
 async function revealAll(page) {
-  const button = page.getByRole("button", {
-    name: "Продолжить чтение",
-    exact: true,
-  });
+  let text = await page.locator("main").innerText();
+  const button = page.getByRole("button", { name: "Следующий фрагмент →", exact: true });
   while (await button.count()) {
     const old = await page.getByRole("status").innerText();
     await button.click();
     await expect(page.getByRole("status")).not.toHaveText(old);
+    text += "\n" + await page.locator("main").innerText();
   }
+  return text;
 }
 async function finishQuiz(page) {
   await page.goto("http://pilot.test/quiz/1");
@@ -128,7 +129,7 @@ test("complete production pilot, exact content, gates, reload, reset and no answ
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       scene.title,
     );
-    await revealAll(page);
+    const visitedText = await revealAll(page);
     for (const k of [
       "text",
       "narration",
@@ -137,12 +138,12 @@ test("complete production pilot, exact content, gates, reload, reset and no answ
       "monologue_middle",
       "monologue_after",
     ])
-      if (scene[k]) await assertText(page, scene[k]);
+      if (scene[k]) for (const paragraph of scene[k].split("\n\n")) expect(visitedText).toContain(paragraph);
     for (const m of [...(scene.messages || []), ...(scene.dialogue || [])])
-      await assertText(page, m.text);
+      expect(visitedText).toContain(m.text);
     await expect(page.locator("main img")).toHaveJSProperty(
       "naturalWidth",
-      i === 0 ? 587 : i === 1 ? 582 : i === 2 ? 602 : 1122,
+      i === 0 ? 587 : i === 1 ? 582 : i === 2 ? 1920 : 1122,
     );
     await noOverflow(page);
     if (i === 2)
@@ -316,79 +317,43 @@ test("guarded direct links, small layouts, keyboard and unavailable storage", as
   await expect(page.getByRole("radio")).toHaveCount(4);
 });
 
-test("sequential reading: one key press, repeat protection, refresh, back and narrow screens", async ({
-  page,
-}, info) => {
+test("single live reply, full chat, back, reload, keyboard and responsive layouts", async ({ page }, info) => {
   await finishQuiz(page);
   await page.goto("http://pilot.test/stories/nikita/sunday");
   await goNext(page);
-  await expect(page).toHaveURL(/\/messages_dima$/);
-  const first = story.stages[0].scenes[1];
-  await expect(page.getByRole("status")).toHaveText(
-    "Открыто фрагментов: 1 из 4",
-  );
-  await expect(
-    page.getByText(first.messages[0].text, { exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByText(first.messages[1].text, { exact: true }),
-  ).toHaveCount(0);
-  await expect(
-    page.getByRole("button", { name: "Далее →", exact: true }),
-  ).toBeDisabled();
-  await page
-    .getByRole("button", { name: "Продолжить чтение", exact: true })
-    .focus();
+  for (const message of story.stages[0].scenes[1].messages) await assertText(page, message.text);
+  await expect(page.getByRole("button", { name: "Сцена прочитана", exact: true })).toBeDisabled();
+  await goNext(page);
+  await expect(page).toHaveURL(/\/keys$/);
+  await expect(page.locator(".live-dialogue")).toHaveCount(0);
+  const forward = page.getByRole("button", { name: "Следующий фрагмент →", exact: true });
+  await forward.focus();
   await page.keyboard.down("Enter");
-  await expect(page.getByRole("status")).toHaveText(
-    "Открыто фрагментов: 2 из 4",
-  );
+  await expect(page.locator(".live-dialogue")).toHaveCount(1);
+  await expect(page.locator(".live-dialogue")).toContainText("Никит, иди сюда. Поговорим.");
   await page.keyboard.down("Enter");
   await page.keyboard.up("Enter");
-  await expect(page.getByRole("status")).toHaveText(
-    "Открыто фрагментов: 2 из 4",
-  );
-  await expect(
-    page.getByText(first.messages[1].text, { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("status")).toHaveText("Фрагмент 2 из 10");
+  await forward.click();
+  await expect(page.locator(".live-dialogue")).toHaveCount(1);
+  await expect(page.getByText("Никит, иди сюда. Поговорим.", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "← Предыдущий фрагмент" }).click();
   await page.reload();
-  await expect(page.getByRole("status")).toHaveText(
-    "Открыто фрагментов: 2 из 4",
-  );
-  await revealAll(page);
-  await goNext(page);
-  await expect(page).toHaveURL(/\/keys$/);
-  await expect(page.getByRole("status")).toHaveText(
-    "Открыто фрагментов: 1 из 10",
-  );
-  await expect(
-    page.getByText("Никит, иди сюда. Поговорим.", { exact: true }),
-  ).toHaveCount(0);
-  await page.getByRole("button", { name: "← Назад", exact: true }).click();
-  await expect(page).toHaveURL(/\/messages_dima$/);
-  await expect(
-    page.getByRole("button", { name: "Сцена прочитана", exact: true }),
-  ).toBeDisabled();
-  await goNext(page);
-  await expect(page).toHaveURL(/\/keys$/);
-  for (const width of [320, 375, 430, 768, 1023, 1280]) {
+  await expect(page.getByRole("status")).toHaveText("Фрагмент 2 из 10");
+  const saved = await page.evaluate(() => JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")));
+  expect(saved.stories.nikita.revealedFragments.keys).toBe(3);
+  for (const width of [320, 360, 390, 430, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     await noOverflow(page);
+    const image = page.locator(".scene-artwork img");
+    const dimensions = await image.evaluate(el => ({ width: el.clientWidth, height: el.clientHeight, ratio: el.naturalWidth / el.naturalHeight }));
+    expect(Math.abs(dimensions.width / dimensions.height - dimensions.ratio)).toBeLessThan(.03);
   }
   await page.setViewportSize(info.project.use.viewport);
   await revealAll(page);
-  await expect(
-    page.getByRole("button", { name: "Далее →", exact: true }),
-  ).toBeEnabled();
-  await page.screenshot({
-    path: `${artifacts}/sequence-${info.project.name}.png`,
-    fullPage: true,
-  });
-  await page.goBack();
-  await expect(page).toHaveURL(/\/messages_dima$/);
-  await expect(
-    page.getByRole("button", { name: "Сцена прочитана", exact: true }),
-  ).toBeDisabled();
+  await page.getByRole("button", { name: "← Предыдущий фрагмент" }).click();
+  await expect(page.getByRole("button", { name: "Далее →", exact: true })).toBeEnabled();
+  await page.screenshot({ path: `${artifacts}/single-dialogue-${info.project.name}.png`, fullPage: true });
 });
 
 test("existing v1 session migrates in the browser without replaying visited scenes or losing answers", async ({
@@ -453,9 +418,56 @@ test("existing v1 session migrates in the browser without replaying visited scen
   const saved = await page.evaluate(() =>
     JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")),
   );
-  expect(saved.version).toBe(2);
+  expect(saved.version).toBe(3);
   expect(saved.quiz).toEqual(legacy.quiz);
   expect(saved.stories.nikita.answers).toEqual(legacy.nikita.answers);
   expect(saved.stories.nikita.currentStepId).toBe("football");
   expect(saved.stats.filter).toBe("Только нефизические");
+});
+
+test("v2 reading migration, theme tokens, material close and mobile reading", async ({ page }, info) => {
+  await finishQuiz(page);
+  await page.goto("http://pilot.test/stories/nikita/sunday");
+  await goNext(page);
+  await goNext(page);
+  await revealAll(page);
+  await page.evaluate(() => {
+    const key = "invisible-stories:pilot:v1";
+    const saved = JSON.parse(sessionStorage.getItem(key));
+    saved.version = 2;
+    delete saved.stories.nikita.currentFragments;
+    saved.stories.nikita.revealedFragments.keys = 6;
+    sessionStorage.setItem(key, JSON.stringify(saved));
+  });
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText("Фрагмент 6 из 10");
+  await page.getByRole("button", { name: "← Предыдущий фрагмент" }).click();
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText("Фрагмент 5 из 10");
+  await revealAll(page);
+  await goNext(page);
+  await revealAll(page);
+  await goNext(page);
+  await page.locator(".material").nth(1).getByRole("button", { name: "Открыть материал ↓" }).click();
+  for (const [theme, accent] of [["nikita", "#9d5946"], ["liza", "#76647f"], ["ilya", "#65745b"]]) {
+    const value = await page.locator(".story-design").evaluate((el, theme) => {
+      el.dataset.storyTheme = theme;
+      return getComputedStyle(el).getPropertyValue("--story-accent").trim();
+    }, theme);
+    expect(value).toBe(accent);
+  }
+  await page.locator(".story-design").evaluate(el => { el.dataset.storyTheme = "nikita"; });
+  for (const width of [360, 390, 430, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    await noOverflow(page);
+    await expect(page.getByText("НЕ СПРАШИВАТЬ, ЕСЛИ ПАПА ВЫПИЛ", { exact: true })).toBeVisible();
+  }
+  await page.setViewportSize(info.project.use.viewport);
+  await page.screenshot({ path: `${artifacts}/material-viewer-${info.project.name}.png`, fullPage: true });
+  await page.getByRole("button", { name: "Закрыть материал" }).focus();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".material-viewer")).toHaveCount(0);
+  await expect(page.locator(".material").nth(1).getByRole("button", { name: "Открыть материал ↓" })).toBeFocused();
+  await page.reload();
+  await expect(page.locator(".studied")).toHaveCount(1);
 });

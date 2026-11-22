@@ -1,4 +1,4 @@
-import { MaterialContent } from "./Story";
+import MaterialViewer from "./materials/MaterialViewer";
 import { Note, Progress } from "./UI";
 export default function StoryMaterials({ story, progress, onToggle }) {
   const allOpened = story.materials.every((m) =>
@@ -42,7 +42,7 @@ export default function StoryMaterials({ story, progress, onToggle }) {
           </button>
           {progress.active === m.id && (
             <div id={`material-${story.id}-${m.id}`}>
-              <MaterialContent material={m} story={story} />
+              <MaterialViewer material={m} story={story} onClose={() => { onToggle(m.id); document.querySelector(`[aria-controls="material-${story.id}-${m.id}"]`)?.focus(); }} />
             </div>
           )}
         </section>

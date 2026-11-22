@@ -190,7 +190,7 @@ test("v1 migration retains completed pilot, quiz, materials, map and statistics"
     revealed: true,
   };
   const b = restore(JSON.stringify(legacy));
-  assert.equal(b.version, 2);
+  assert.equal(b.version, 3);
   assert.deepEqual(b.quiz, legacy.quiz);
   assert.equal(b.stories.nikita.completed, true);
   assert.deepEqual(b.stories.nikita.opened, legacy.nikita.opened);
@@ -385,4 +385,34 @@ test("stage order and gates also support a final scene after the educational con
   s = model.reducer(s, { type: "STORY_COMPLETE", storyId: data.id });
   assert.equal(s.stories[data.id].completed, true);
   assert.deepEqual(model.restore(JSON.stringify(s)), s);
+});
+
+
+test("v2 migration retains reached position and v3 back navigation never loses progress", () => {
+  let s = reachMaterials(quizDone());
+  s.version = 2;
+  delete s.stories.nikita.currentFragments;
+  s = restore(JSON.stringify(s));
+  assert.equal(s.stories.nikita.currentFragments.keys, 10);
+  const reached = s.stories.nikita.revealedFragments.keys;
+  s = apply(s, "READ_POSITION", { sceneId: "keys", position: 2 });
+  assert.equal(s.stories.nikita.currentFragments.keys, 2);
+  assert.equal(s.stories.nikita.revealedFragments.keys, reached);
+  assert.equal(s.stories.nikita.unlocked, 4);
+  assert.deepEqual(restore(JSON.stringify(s)), s);
+});
+
+test("reading position guards prevent skipping scenes; complete chats preserve source counts", () => {
+  let s = quizDone();
+  assert.deepEqual(apply(s, "READ_POSITION", { sceneId: "keys", position: 2 }), s);
+  s = apply(s, "STORY_ADVANCE", { index: 0 });
+  s = apply(s, "READ_POSITION", { sceneId: "messages_dima", position: 1 });
+  assert.equal(s.stories.nikita.revealedFragments.messages_dima, 4);
+  s = apply(s, "STORY_ADVANCE", { index: 1 });
+  assert.deepEqual(apply(s, "READ_POSITION", { sceneId: "keys", position: 9 }), s);
+  s = apply(s, "READ_POSITION", { sceneId: "keys", position: 2 });
+  assert.equal(s.stories.nikita.currentFragments.keys, 2);
+  assert.equal(s.stories.nikita.revealedFragments.keys, 2);
+  s = apply(s, "READ_POSITION", { sceneId: "keys", position: 1 });
+  assert.equal(s.stories.nikita.revealedFragments.keys, 2);
 });

@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { storyRegistry } from "../content/storyRegistry.js";
 import { useExhibition } from "../state/Provider";
-import { storyPath, fragmentCount, stepComplete } from "../state/model";
+import { storyPath, stepComplete } from "../state/model";
 import { Scene } from "../components/Story";
 import StoryMaterials from "../components/StoryMaterials";
 import InvisibleMap from "../components/InvisibleMap";
@@ -24,7 +24,7 @@ export default function StoryPage() {
   const nextStoryId =
     Object.keys(storyRegistry)[Object.keys(storyRegistry).indexOf(storyId) + 1];
   return (
-    <>
+    <div className={step.kind === "scene" || step.kind === "materials" ? "story-design" : undefined} data-story-theme={story.presentation.theme ?? story.id}>
       <div className="eyebrow">
         {story.presentation.archiveLabel ?? story.title}
       </div>
@@ -33,8 +33,8 @@ export default function StoryPage() {
         <Scene
           scene={step.scene}
           story={story}
-          visible={fragmentCount(p, step.scene)}
-          onReveal={() => send("REVEAL_FRAGMENT", { sceneId: step.scene.id })}
+          position={p.currentFragments[step.scene.id]}
+          onPosition={(position) => send("READ_POSITION", { sceneId: step.scene.id, position })}
         />
       )}
       {step.kind === "materials" && (
@@ -82,6 +82,7 @@ export default function StoryPage() {
       )}
       <Navigation
         back
+        backLabel={step.kind === "scene" ? "← Предыдущий этап" : "← Назад"}
         next
         disabled={!stepComplete(story, p, index)}
         onBack={() =>
@@ -117,6 +118,6 @@ export default function StoryPage() {
           }
         }}
       />
-    </>
+    </div>
   );
 }

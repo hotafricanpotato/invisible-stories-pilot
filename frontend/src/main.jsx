@@ -163,3 +163,5 @@ createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </React.StrictMode>,
 );
+
+import "./story-design.css";

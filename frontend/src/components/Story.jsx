@@ -1,6 +1,10 @@
 import { Paragraphs } from "./UI";
-import StorySequence from "./StorySequence";
-import { sceneFragments } from "../content/storyRegistry.js";
+import { useEffect } from "react";
+import SceneArtwork from "./story/SceneArtwork";
+import LiveDialogue from "./story/LiveDialogue";
+import MonologuePanel from "./story/MonologuePanel";
+import SceneNavigation from "./story/SceneNavigation";
+import { sceneFragments, fragmentRange } from "../content/storyRegistry.js";
 export function Photo({ art, compact = false }) {
   if (!art) return null;
   return (
@@ -19,13 +23,9 @@ export function Photo({ art, compact = false }) {
   );
 }
 export function Monologue({ text }) {
-  return (
-    <aside className="monologue">
-      <div className="eyebrow">ВНУТРЕННИЙ МОНОЛОГ</div>
-      <Paragraphs text={text} />
-    </aside>
-  );
+  return <MonologuePanel text={text} />;
 }
+
 export function Message({ message, character }) {
   return message.type === "narration" ? (
     <p className="narration">{message.text}</p>
@@ -62,59 +62,34 @@ function Fragment({ part, character }) {
   if (part.kind === "monologue") return <Monologue text={part.text} />;
   return <p className="narration">{part.text}</p>;
 }
-export function Scene({ scene, story, visible, onReveal }) {
-  const parts = sceneFragments(scene).slice(0, visible);
-  const presentation = story.presentation;
-  return (
-    <>
-      <h1>{scene.title}</h1>
-      {scene.time && <p className="caption">{scene.time}</p>}
-      <StorySequence
-        visible={visible}
-        total={sceneFragments(scene).length}
-        onReveal={onReveal}
-      >
-        {scene.type === "messages" ? (
-          <>
-            <div className="messages-layout">
-              <Photo art={presentation.artwork?.[scene.id]} compact />
-              <div className="chat-panel">
-                <Chat
-                  title={scene.chatTitle ?? presentation.chatTitle}
-                  messages={parts
-                    .filter((p) => p.kind === "message")
-                    .map((p) => p.message)}
-                  character={story.character}
-                />
-              </div>
-            </div>
-            <div className="reading">
-              {parts
-                .filter((p) => p.kind !== "message")
-                .map((part, i) => (
-                  <Fragment key={i} part={part} character={story.character} />
-                ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <Photo art={presentation.artwork?.[scene.id]} />
-            <div className="reading">
-              {scene.messages && (
-                <>
-                  <div className="eyebrow">СООБЩЕНИЯ</div>
-                  <p className="chat-title">Уведомление</p>
-                </>
-              )}
-              {parts.map((part, i) => (
-                <Fragment key={i} part={part} character={story.character} />
-              ))}
-            </div>
-          </>
-        )}
-      </StorySequence>
-    </>
-  );
+export function Scene({ scene, story, position, onPosition }) {
+  const parts = sceneFragments(scene);
+  const range = fragmentRange(scene, position, story.presentation.sceneModes?.[scene.id]);
+  // Reading a complete chat marks its source fragments together without reordering them.
+  useEffect(() => { onPosition(position); }, [scene.id, position]);
+  const current = parts.slice(range.start - 1, range.end);
+  return <>
+    <h1>{scene.title}</h1>
+    {scene.time && <p className="caption">{scene.time}</p>}
+    <div className={scene.type === "messages" ? "story-chat-layout" : "story-scene-layout"}>
+      <SceneArtwork art={story.presentation.artwork?.[scene.id]} />
+      <div className="scene-reading" aria-live="polite" aria-atomic="true">
+        {scene.type === "messages" ? <>
+          <Chat title={scene.chatTitle ?? story.presentation.chatTitle}
+            messages={scene.messages} character={story.character} />
+          {current.filter(part => part.kind !== "message").map((part, i) =>
+            <Fragment key={i} part={part} character={story.character} />)}
+        </> : current[0]?.kind === "message" && story.presentation.sceneModes?.[scene.id] === "mixed" ?
+          <Chat messages={current.map(part => part.message)} character={story.character} /> :
+          current.map((part, i) => part.kind === "message" ?
+            <LiveDialogue key={i} message={part.message} /> :
+            <Fragment key={i} part={part} character={story.character} />)}
+      </div>
+    </div>
+    <SceneNavigation start={range.start} end={range.end} total={parts.length}
+      onPrevious={() => onPosition(range.start - 1)}
+      onNext={() => onPosition(range.end + 1)} />
+  </>;
 }
 export function MaterialContent({ material: m, story }) {
   const p = story.presentation;

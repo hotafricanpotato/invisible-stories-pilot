@@ -1,5 +1,5 @@
 import { exhibitionConfig } from "../content/exhibitionConfig.js";
-import { storyRegistry, sceneFragments } from "../content/storyRegistry.js";
+import { storyRegistry, sceneFragments, fragmentRange } from "../content/storyRegistry.js";
 export const STORAGE_KEY = "invisible-stories:pilot:v1";
 const blankStory = (story) => ({
   unlocked: 0,
@@ -9,6 +9,7 @@ const blankStory = (story) => ({
   answers: {},
   revealed: false,
   completed: false,
+  currentFragments: Object.fromEntries(story.scenes.map((scene) => [scene.id, 1])),
   revealedFragments: Object.fromEntries(
     story.scenes.map((scene) => [scene.id, 1]),
   ),
@@ -20,7 +21,7 @@ export const quizPath = (i) => `/quiz/${i + 1}`;
 export function createExhibitionModel(registry) {
   const ids = Object.keys(registry);
   const initialState = () => ({
-    version: 2,
+    version: 3,
     contentVersion: exhibitionConfig.contentVersion,
     cursor: "/",
     quiz: { answers: {}, completed: false },
@@ -111,6 +112,20 @@ export function createExhibitionModel(registry) {
       stories: { ...s.stories, [story.id]: { ...p, ...patch } },
     });
     switch (a.type) {
+      case "READ_POSITION": {
+        const index = story.steps.findIndex(step => step.kind === "scene" && step.id === a.sceneId);
+        if (index < 0 || index > p.unlocked || !Number.isInteger(a.position)) return s;
+        const scene = story.steps[index].scene;
+        const max = sceneFragments(scene).length;
+        if (a.position < 1 || a.position > max || a.position > fragmentCount(p, scene) + 1) return s;
+        const range = fragmentRange(scene, a.position, story.presentation.sceneModes?.[scene.id]);
+        const reached = Math.max(fragmentCount(p, scene), range.end);
+        if (p.currentFragments[scene.id] === a.position && p.revealedFragments[scene.id] === reached) return s;
+        return update({
+          currentFragments: { ...p.currentFragments, [scene.id]: a.position },
+          revealedFragments: { ...p.revealedFragments, [scene.id]: reached },
+        });
+      }
       case "REVEAL_FRAGMENT": {
         const index = story.steps.findIndex(
           (step) => step.id === a.sceneId && step.kind === "scene",
@@ -120,6 +135,7 @@ export function createExhibitionModel(registry) {
         const visible = fragmentCount(p, scene);
         if (visible >= sceneFragments(scene).length) return s;
         return update({
+          currentFragments: { ...p.currentFragments, [scene.id]: visible + 1 },
           revealedFragments: {
             ...p.revealedFragments,
             [scene.id]: visible + 1,
@@ -212,7 +228,7 @@ export function createExhibitionModel(registry) {
     try {
       const input = JSON.parse(raw);
       if (
-        ![1, 2].includes(input?.version) ||
+        ![1, 2, 3].includes(input?.version) ||
         input.contentVersion !== exhibitionConfig.contentVersion
       )
         return initialState();
@@ -258,6 +274,9 @@ export function createExhibitionModel(registry) {
             input.version === 1 && canEnter(b, id) && index <= p.unlocked
               ? max
               : count(saved.revealedFragments?.[scene.id], max);
+          p.currentFragments[scene.id] = input.version === 3
+            ? count(saved.currentFragments?.[scene.id], p.revealedFragments[scene.id])
+            : p.revealedFragments[scene.id];
         }
         for (let index = 0; index < p.unlocked; index++)
           if (!stepComplete(story, p, index)) {
