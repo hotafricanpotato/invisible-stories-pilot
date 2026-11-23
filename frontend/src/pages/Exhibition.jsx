@@ -203,6 +203,7 @@ export function Selection() {
         <article className="story-card" key={story.id}>
           {story.presentation.selection?.cover ? <img
             src={story.presentation.selection.cover}
+            className={story.presentation.selection.imageClassName}
             alt={story.presentation.selection.alt ?? story.title}
           /> : <div className="selection-placeholder" role="img" aria-label="Временная обложка истории Лизы">Временная иллюстрация</div>}
           <div>

@@ -4,7 +4,7 @@ export default function SceneArtwork({ art }) {
     <span className="eyebrow">Временная иллюстрация</span>
     <p>{art.label}</p>
   </figure>;
-  return <figure className="scene-artwork">
+  return <figure className={`scene-artwork${art.layout === "portrait" ? " scene-artwork--portrait" : ""}`}>
     <picture>
       {art.mobileSrc && <source media="(max-width: 640px)" srcSet={art.mobileSrc} />}
       <img src={art.src} width={art.width} height={art.height}

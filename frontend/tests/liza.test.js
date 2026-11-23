@@ -138,3 +138,21 @@ test("adding a third registry module automatically extends the statistics gate",
   s=finish(s,"test-third",m,registry);
   assert.equal(m.allowedPath("/statistics/1",s),"/statistics/1");
 });
+
+
+test("all seven approved artwork files match the supplied manifest byte for byte", async () => {
+  const manifest=await readFile(new URL("../docs/assets/liza-approved/MANIFEST.csv",import.meta.url),"utf8");
+  const rows=manifest.trim().split(/\r?\n/).slice(1);
+  assert.equal(rows.length,7);
+  const art=[...Object.values(liza.presentation.artwork),...Object.values(liza.presentation.materialArtwork["family-album"])];
+  assert.equal(art.length,7);
+  for(const row of rows) {
+    const [name,,size,hash]=row.split(",");
+    const data=await readFile(new URL(`../public/assets/liza/${name}`,import.meta.url));
+    assert.equal(createHash("sha256").update(data).digest("hex"),hash,name);
+    const definition=art.find(item=>item.src===`/assets/liza/${name}`);
+    assert.ok(definition,name);assert.equal(`${definition.width}x${definition.height}`,size);
+    assert.equal(definition.placeholder,undefined);
+    assert.equal(definition.mobileSrc,undefined);
+  }
+});

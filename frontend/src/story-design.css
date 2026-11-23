@@ -189,3 +189,14 @@
 .story-shell .album-publication { background: var(--story-surface); padding: 24px; margin-top: 20px; }
 .story-shell .story-closing { margin-top: 32px; }
 @media (max-width: 640px) { .story-shell .album-photos { grid-template-columns: minmax(0, 1fr); } }
+
+/* Approved Liza art already contains its paper edges/album frames. Keep the entire image. */
+.story-shell[data-story-theme="liza"] .scene-artwork--portrait { max-width: 520px; margin-inline: auto; }
+.story-card .liza-cover { height: auto; object-fit: contain; }
+.story-shell .photo-album img {
+  display: block; width: 100%; max-width: 100%; height: auto; object-fit: contain;
+  border: 0; padding: 0; box-shadow: none; background: transparent; border-radius: 0;
+}
+.story-shell .photo-album figure { border: 0; padding: 0; box-shadow: none; background: transparent; }
+.story-shell .photo-album figcaption p { font-size: 17px; line-height: 1.6; margin-bottom: 8px; }
+.story-shell .photo-album figcaption .album-description { color: var(--story-muted); font-size: 15px; }

@@ -94,7 +94,7 @@ export function MaterialContent({ material: m, story }) {
   return (
     <div className="material-content">
       {m.time && <p className="caption">{m.time}</p>}
-      {m.type === "album" && <PhotoAlbum material={m} />}
+      {m.type === "album" && <PhotoAlbum material={m} artwork={p.materialArtwork?.[m.id]} />}
       {m.type === "chat" && (
         <Chat
           messages={m.messages}

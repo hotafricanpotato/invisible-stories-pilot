@@ -2,10 +2,26 @@ import { expect } from "@playwright/test";
 import { test, finishQuiz, goNext, assertText, noOverflow } from "./support.js";
 import { storyRegistry, sceneFragments } from "../../src/content/storyRegistry.js";
 import path from "node:path";
+import { reducer } from "../../src/state/model.js";
 const liza=storyRegistry.liza;
 const artifacts=process.env.ARTIFACT_DIR || path.resolve("../../work");
 const saved = page => page.evaluate(()=>JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")));
+async function checkArtwork(page, selector = ".scene-artwork img") {
+  const images=page.locator(selector);
+  for(const image of await images.all()) {
+    await expect(image).toHaveJSProperty("complete",true);
+    const metrics=await image.evaluate(el=>({naturalWidth:el.naturalWidth,naturalHeight:el.naturalHeight,
+      width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height,
+      border:getComputedStyle(el).borderTopWidth,padding:getComputedStyle(el).paddingTop}));
+    expect(metrics.naturalWidth).toBeGreaterThan(0);
+    expect(Math.abs(metrics.width/metrics.height-metrics.naturalWidth/metrics.naturalHeight)).toBeLessThan(.02);
+    expect(metrics.border).toBe("0px");expect(metrics.padding).toBe("0px");
+  }
+}
 async function readScene(page, scene) {
+  await expect(page.locator(".artwork-placeholder")).toHaveCount(0);
+  await expect(page.locator(".scene-artwork img")).toHaveCount(1);
+  await checkArtwork(page);
   for(const [i,part] of sceneFragments(scene).entries()) {
     await expect(page.getByRole("status")).toHaveText(`Фрагмент ${i+1} из ${sceneFragments(scene).length}`);
     if(part.kind==="chat") {
@@ -58,7 +74,8 @@ test("Liza full approved scenario, independent progress, album, gates and exact 
     if(material.type==="chat") for(const m of material.messages) await assertText(page,m.text);
     if(material.type==="album") {
       await expect(page.locator(".photo-album figure")).toHaveCount(2);
-      await expect(page.locator(".photo-album img")).toHaveCount(0);
+      await expect(page.locator(".photo-album img")).toHaveCount(2);
+      await checkArtwork(page, ".photo-album img");
       for(const photo of material.photos) { await assertText(page,photo.description);await assertText(page,photo.caption); }
       await assertText(page,material.publication);
       await page.screenshot({path:`${artifacts}/liza-album-${info.project.name}.png`,fullPage:true});
@@ -109,7 +126,7 @@ test("Liza responsive content and independent story resume",async({page},info)=>
   await page.goto("http://pilot.test/stories/liza/introduction");
   await goNext(page);
   for(const width of [360,390,430,1280,1920]) {
-    await page.setViewportSize({width,height:900});await noOverflow(page);
+    await page.setViewportSize({width,height:900});await noOverflow(page);await checkArtwork(page);
     await expect(page.locator(".scene-reading .message-row")).toHaveCount(4);
     await expect(page.getByRole("button",{name:"Далее →",exact:true})).toBeVisible();
   }
@@ -149,4 +166,42 @@ test("completed v3 pilot keeps statistics and completion while Liza starts indep
   expect(current.stories.liza.currentFragments.introduction).toBe(2);
   await page.goto("http://pilot.test/stories/nikita/keys");
   await expect(page.getByRole("status")).toHaveText("Фрагмент 3 из 10");
+});
+
+
+test("all seven approved images keep full composition on desktop and mobile", async({page},info)=>{
+  // Real reducer actions prepare reached steps; the full-route test above covers the gates.
+  await finishQuiz(page);
+  let state=await saved(page);
+  for(let i=0;i<liza.steps.length;i++) {
+    const step=liza.steps[i];
+    if(step.kind==="scene") while(state.stories.liza.revealedFragments[step.id]<sceneFragments(step.scene).length)
+      state=reducer(state,{type:"REVEAL_FRAGMENT",storyId:"liza",sceneId:step.id});
+    if(step.kind==="materials") for(const m of liza.materials) state=reducer(state,{type:"MATERIAL",storyId:"liza",id:m.id});
+    if(step.kind==="map") {
+      for(const q of liza.questions) state=reducer(state,{type:"MAP_ANSWER",storyId:"liza",id:q.id,value:q.correct});
+      state=reducer(state,{type:"MAP_REVEAL",storyId:"liza"});
+    }
+    if(i<liza.steps.length-1) state=reducer(state,{type:"STORY_ADVANCE",storyId:"liza",index:i});
+  }
+  state.stories.liza.active="family-album";
+  await page.evaluate(s=>sessionStorage.setItem("invisible-stories:pilot:v1",JSON.stringify(s)),state);
+  for(const width of [360,390,430,1280,1920]) {
+    await page.setViewportSize({width,height:900});
+    for(const scene of liza.scenes) {
+      await page.goto(`http://pilot.test/stories/liza/${scene.id}`);
+      await checkArtwork(page);await noOverflow(page);
+    }
+    await page.goto("http://pilot.test/stories/liza/materials");
+    await expect(page.locator(".album-placeholder")).toHaveCount(0);
+    await checkArtwork(page,".photo-album img");await noOverflow(page);
+    for(const figure of await page.locator(".photo-album figure").all()) {
+      await expect(figure).toHaveCSS("border-top-width","0px");
+      await expect(figure).toHaveCSS("box-shadow","none");
+    }
+  }
+  await page.setViewportSize(info.project.use.viewport);
+  await page.screenshot({path:`${artifacts}/liza-approved-album-${info.project.name}.png`,fullPage:true});
+  await page.goto("http://pilot.test/stories/liza/other-plans");
+  await page.screenshot({path:`${artifacts}/liza-approved-kitchen-${info.project.name}.png`,fullPage:true});
 });
