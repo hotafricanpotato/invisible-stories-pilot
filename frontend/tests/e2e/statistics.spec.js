@@ -32,7 +32,7 @@ test('three pages: exact records, navigation, top, screenshots, sources and prog
   if(n<3){await page.evaluate(()=>scrollTo(0,document.body.scrollHeight));await page.getByRole('button',{name:'Далее',exact:true}).click();}
  }
  await page.getByRole('button',{name:'Назад',exact:true}).click();await expect(page).toHaveURL(/\/statistics\/2$/);await expect.poll(()=>page.evaluate(()=>scrollY)).toBe(0);
- await page.getByRole('button',{name:'Далее',exact:true}).click();await page.getByRole('button',{name:'Завершить просмотр'}).click();await expect(page).toHaveURL(/\/complete$/);
+ await page.getByRole('button',{name:'Далее',exact:true}).click();await page.getByRole('button',{name:'Завершить просмотр'}).click();await expect(page).toHaveURL(/\/final-test\/1$/);
  expect((await saved(page)).stats.completed).toBe(true);expect((await saved(page)).stories).toEqual(state.stories);
  await page.goto('http://pilot.test/stories');await page.getByRole('button',{name:'Перейти к „Невидимой статистике“'}).click();await expect(page).toHaveURL(/\/statistics\/1$/);expect((await saved(page)).stats.completed).toBe(true);
  await page.getByRole('button',{name:'Вернуться к историям',exact:true}).click();await expect(page).toHaveURL(/\/stories$/);expect(errors).toEqual([]);

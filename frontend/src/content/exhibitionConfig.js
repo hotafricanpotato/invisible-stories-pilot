@@ -1,4 +1,4 @@
-// Add only approved story modules here. No placeholder narratives or final questions.
+// Add only approved story modules here. No placeholder narratives or unapproved questions.
 export const exhibitionConfig = {
   mode: "full",
   availableStoryIds: ["liza", "nikita", "ilya"],
@@ -10,7 +10,7 @@ export const exhibitionConfig = {
   },
   postStoriesPath: "/stories",
   fullVersionStoryCount: 3,
-  finalQuizEnabled: false,
+  finalQuizEnabled: true,
   epilogueEnabled: false,
   contentVersion: "pilot-1",
 };

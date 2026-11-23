@@ -1,0 +1,37 @@
+/* Isolated final-test typography, using the exhibition's warm surface. */
+.final-test-main { max-width:1080px; margin-top:24px; }
+.final-test { max-width:900px; margin:0 auto; padding-bottom:8px; }
+.final-test h1,.final-test h2,.final-test legend { font-family:Georgia,'Times New Roman',serif; font-weight:500; letter-spacing:-.02em; }
+.final-test h1 { font-size:clamp(34px,4vw,52px); line-height:1.12; margin:0 0 24px; }
+.final-test h1:focus { outline:none; }
+.final-test p { font-size:18px; line-height:1.6; }
+.final-test-intro > p:not(.final-test-index) { max-width:72ch; color:var(--statistics-muted); margin:12px 0; }
+.final-test .final-test-index { font-size:13px; line-height:1.5; color:var(--statistics-muted); letter-spacing:.09em; margin:0 0 12px; }
+.final-test-situation { border-top:1px solid var(--statistics-line); margin-top:28px; padding-top:24px; }
+.final-test h2 { font-size:clamp(25px,2.7vw,34px); margin:0 0 16px; line-height:1.25; color:var(--statistics-accent); }
+.final-test-situation p { max-width:74ch; margin:0 0 26px; }
+.final-test-choices { min-width:0; border:0; padding:0; margin:0; }
+.final-test-choices legend { font-size:clamp(22px,2.2vw,28px); line-height:1.35; padding:0 0 18px; }
+.final-test-choices label { display:grid; grid-template-columns:20px 24px minmax(0,1fr); gap:12px; align-items:baseline; padding:18px 12px; border-top:1px solid var(--statistics-line); cursor:pointer; font-size:18px; line-height:1.5; }
+.final-test-choices label:last-child { border-bottom:1px solid var(--statistics-line); }
+.final-test-choices .is-selected { background:#9d59460c; }
+.final-test-choices input { width:18px; height:18px; margin:0; accent-color:var(--statistics-accent); }
+.final-test-choices input:focus-visible { outline:3px solid var(--statistics-accent); outline-offset:4px; }
+.final-answer-letter { font:700 21px Georgia,serif; color:var(--statistics-accent); }
+.final-test-navigation { display:flex; justify-content:space-between; gap:16px; margin-top:28px; padding-top:20px; border-top:1px solid var(--statistics-line); }
+.final-test-shell button:disabled { opacity:1; color:var(--statistics-muted); background:#e5d8cb; border-color:var(--statistics-line); }
+.final-review-entry { border-top:1px solid var(--statistics-line); padding:28px 0; }
+.final-review-entry dl { margin:24px 0; }
+.final-review-entry dt { color:var(--statistics-muted); font-size:14px; margin:18px 0 7px; }
+.final-review-entry dd { font-size:18px; line-height:1.55; margin:0; max-width:74ch; }
+.final-review-entry dt:nth-of-type(2) { color:var(--statistics-ink); font-weight:600; }
+.final-review-explanation { border-left:2px solid var(--statistics-line); padding-left:20px; margin-bottom:0; max-width:74ch; }
+.final-test .final-review-situation { color:var(--statistics-muted); max-width:74ch; }
+@media(max-width:700px) {
+ .final-test-main { margin-top:16px; }
+ .final-test-choices label { padding:16px 0; gap:8px; grid-template-columns:20px 20px minmax(0,1fr); }
+ .final-test-navigation { flex-direction:column; }
+ .final-review-entry { padding:24px 0; }
+ .final-review-explanation { padding-left:14px; }
+ .final-test-shell .route-strip { gap:8px; flex-wrap:wrap; }
+}

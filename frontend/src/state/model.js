@@ -1,3 +1,4 @@
+import finalTest from "../content/finalTest.json" with { type: "json" };
 import { storyCatalog } from "../content/storyCatalog.js";
 import { exhibitionConfig } from "../content/exhibitionConfig.js";
 import { storyRegistry, sceneFragments, fragmentRange } from "../content/storyRegistry.js";
@@ -33,6 +34,7 @@ export function createExhibitionModel(registry, options = {}) {
     legacyStoryAccess: [],
     legacyStatsAccess: false,
     quiz: { answers: {}, completed: false },
+    finalTest: { revision: finalTest.revision, answers: {}, currentQuestion: 1, completed: false },
     stories: Object.fromEntries(
       ids.map((id) => [id, blankStory(registry[id])]),
     ),
@@ -59,6 +61,10 @@ export function createExhibitionModel(registry, options = {}) {
     id => Object.hasOwn(registry, id) && s.stories[id]?.completed === true,
   );
   const canEnterStats = allStoriesComplete;
+  const canEnterFinalTest = s => canEnterStats(s) && s.stats.completed === true;
+  const finalAnswered = s => finalTest.questions.every(q => Object.hasOwn(q.options, s.finalTest?.answers?.[q.id]));
+  const firstUnanswered = s => Number(finalTest.questions.find(q => !Object.hasOwn(q.options, s.finalTest?.answers?.[q.id]))?.id ?? 5);
+
   const storyStatus = (s, id) => {
     if (!canEnter(s, id)) return "Недоступна";
     if (s.stories[id].completed) return "Пройдена";
@@ -96,6 +102,22 @@ export function createExhibitionModel(registry, options = {}) {
   };
   function reducer(s, a) {
     if (a.type === "RESET") return initialState();
+    if (a.type === "FINAL_RESET")
+      return canEnterFinalTest(s) ? { ...s, finalTest: initialState().finalTest, cursor: "/final-test/1" } : s;
+    if (a.type === "FINAL_ANSWER") {
+      const q = finalTest.questions.find(q => q.id === a.id);
+      if (!canEnterFinalTest(s) || !q || Number(q.id) > firstUnanswered(s) || !Object.hasOwn(q.options, a.value)) return s;
+      return { ...s, finalTest: { ...s.finalTest, answers: { ...s.finalTest.answers, [q.id]: a.value }, currentQuestion: Number(q.id) } };
+    }
+    if (a.type === "FINAL_NEXT") {
+      const q = finalTest.questions.find(q => Number(q.id) === a.page);
+      if (!canEnterFinalTest(s) || !q || !Object.hasOwn(q.options, s.finalTest?.answers?.[q.id]) || a.page > firstUnanswered(s)) return s;
+      const done = a.page === 5 && finalAnswered(s);
+      return { ...s, finalTest: { ...s.finalTest, currentQuestion: Math.min(5,a.page+1), completed: s.finalTest.completed || done } };
+    }
+    if (a.type === "FINAL_VISIT")
+      return canEnterFinalTest(s) && Number.isInteger(a.page) && a.page >= 1 && a.page <= firstUnanswered(s)
+        ? { ...s, finalTest: { ...s.finalTest, currentQuestion: a.page } } : s;
     if (a.type === "CURSOR") {
       if (allowedPath(a.path, s) !== a.path) return s;
       const match = a.path.match(/^\/stories\/([^/]+)\/([^/]+)$/);
@@ -256,7 +278,16 @@ export function createExhibitionModel(registry, options = {}) {
     if (/^\/statistics\/[1-3]$/.test(path)) return path;
     if (path === "/statistics/4") return "/statistics/3";
     if (path === "/statistics") return "/statistics/1";
-    if (path === "/complete") return s.stats.completed ? path : "/statistics/1";
+    if (path.startsWith("/final-test") || path === "/complete") {
+      if (!canEnterStats(s)) return "/stories";
+      if (!canEnterFinalTest(s)) return "/statistics/1";
+      const fallback = `/final-test/${firstUnanswered(s)}`;
+      if (path === "/complete" || path === "/final-test/review")
+        return s.finalTest?.completed === true && finalAnswered(s) ? path : fallback;
+      if (path === "/final-test") return fallback;
+      const question = path.match(/^\/final-test\/([1-5])$/);
+      return question && Number(question[1]) <= firstUnanswered(s) ? path : fallback;
+    }
     return "/";
   }
   function restore(raw) {
@@ -371,6 +402,12 @@ export function createExhibitionModel(registry, options = {}) {
       );
       b.stats.answer = [0, 1, 2].includes(stats.answer) ? stats.answer : null;
       b.stats.revealed = stats.revealed === true && b.stats.answer !== null;
+      if (input.finalTest?.revision === finalTest.revision) {
+        for (const q of finalTest.questions)
+          if (Object.hasOwn(q.options, input.finalTest.answers?.[q.id])) b.finalTest.answers[q.id] = input.finalTest.answers[q.id];
+        b.finalTest.currentQuestion = Math.min(count(input.finalTest.currentQuestion, 5), firstUnanswered(b));
+        b.finalTest.completed = input.finalTest.completed === true && finalAnswered(b);
+      }
       b.cursor =
         typeof input.cursor === "string" ? allowedPath(input.cursor, b) : "/";
       return b;

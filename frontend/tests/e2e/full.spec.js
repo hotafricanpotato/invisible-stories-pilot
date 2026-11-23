@@ -1,3 +1,4 @@
+import {completeFinalTestInBrowser} from "./support.js";
 import { expect } from '@playwright/test';
 import path from 'node:path';
 import { test, completeStoryInBrowser, goNext, noOverflow } from './support.js';
@@ -55,8 +56,9 @@ test('full route twice: three real UI completions, exact notice, reset, replay, 
     await page.getByRole('button',{name:'Далее',exact:true}).click();
     await page.getByRole('button',{name:'Далее',exact:true}).click();
     await page.getByRole('button',{name:'Завершить просмотр',exact:true}).click();
+  await completeFinalTestInBrowser(page);
     await expect(page).toHaveURL(/\/complete$/);
-    await expect(page.locator('main')).toContainText('Итоговый тест и эпилог пока не подключены.');
+    await expect(page.locator('main')).toContainText('Эпилог пока не подключён.');
     await expect(page.locator('main')).not.toContainText('История Ильи');
     if(round===0) {
       await page.getByRole('button',{name:'Начать заново',exact:true}).click();

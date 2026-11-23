@@ -1,3 +1,4 @@
+import {completeFinalTestInBrowser} from "./support.js";
 import { expect } from "@playwright/test";
 import { test, openSelection, goNext, assertText, noOverflow, revealAll, completeStoryInBrowser } from "./support.js";
 import { storyRegistry, sceneFragments } from "../../src/content/storyRegistry.js";
@@ -156,6 +157,7 @@ test("Liza full approved scenario, independent progress, album, gates and exact 
   await page.getByRole("button",{name:"Далее",exact:true}).click();
   await page.getByRole("button",{name:"Далее",exact:true}).click();
   await page.getByRole("button",{name:"Завершить просмотр"}).click();
+  await completeFinalTestInBrowser(page);
   await expect(page).toHaveURL(/\/complete$/);
   expect(errors).toEqual([]);
   expect(requests.filter(r=>new URL(r.url).origin!=="http://pilot.test"||r.method!=="GET"||r.body)).toEqual([]);

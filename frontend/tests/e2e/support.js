@@ -104,3 +104,15 @@ export async function completeStoryInBrowser(page, story) {
   }
   await expect(page).toHaveURL(/\/stories$/);
 }
+
+// Exercise the final test through its real radio controls, with no state injection.
+export async function completeFinalTestInBrowser(page) {
+  for (let n=1;n<=5;n++) {
+    await expect(page).toHaveURL(new RegExp(`/final-test/${n}$`));
+    await page.getByRole('radio').first().check();
+    await page.getByRole('button',{name:n===5?'Перейти к разбору':'Далее',exact:true}).click();
+  }
+  await expect(page).toHaveURL(/\/final-test\/review$/);
+  await page.getByRole('button',{name:'Завершить просмотр',exact:true}).click();
+  await expect(page).toHaveURL(/\/complete$/);
+}

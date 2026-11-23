@@ -22,6 +22,8 @@ import "./styles/story-selection.css";
 import StoryPage from "./pages/StoryPage";
 import "./styles.css";
 import "./styles/statistics-exhibition.css";
+import FinalTestPage from "./pages/FinalTestPage";
+import "./styles/final-test.css";
 function App() {
   const { state, dispatch, storageAvailable } = useExhibition();
   const location = useLocation();
@@ -32,6 +34,7 @@ function App() {
   const cancel = useRef();
   const resetTrigger = useRef();
   const path = allowedPath(location.pathname, state);
+  const finalSurface = location.pathname.startsWith("/final-test") || location.pathname === "/complete";
   const storyRoute = location.pathname.match(/^\/stories\/([^/]+)\/([^/]+)$/);
   const activeStory = storyRoute && Object.hasOwn(storyRegistry, storyRoute[1])
     ? storyRegistry[storyRoute[1]] : null;
@@ -44,7 +47,7 @@ function App() {
     if (location.pathname !== "/")
       dispatch({ type: "CURSOR", path: location.pathname });
     window.scrollTo(0, 0);
-    main.current?.focus(location.pathname.startsWith("/statistics/") ? {preventScroll:true} : undefined);
+    main.current?.focus((location.pathname.startsWith("/statistics/") || finalSurface) ? {preventScroll:true} : undefined);
   }, [location.pathname, path, dispatch]);
   useEffect(() => {
     if (resetPending && location.pathname === "/") {
@@ -56,7 +59,7 @@ function App() {
     if (resetOpen) cancel.current?.focus();
   }, [resetOpen]);
   return (
-    <div className={storyTheme ? "app-shell story-shell" : location.pathname === "/stories" ? "app-shell selection-shell" : location.pathname.startsWith("/statistics") ? "app-shell statistics-shell" : "app-shell"} data-story-theme={storyTheme}>
+    <div className={storyTheme ? "app-shell story-shell" : location.pathname === "/stories" ? "app-shell selection-shell" : location.pathname.startsWith("/statistics") || finalSurface ? `app-shell statistics-shell${finalSurface ? " final-test-shell" : ""}` : "app-shell"} data-story-theme={storyTheme}>
       <a className="skip-link" href="#main">
         К содержанию
       </a>
@@ -113,12 +116,13 @@ function App() {
         <span className={location.pathname === "/" ? "current" : ""}>01 · ГЛАВНАЯ</span>
         <span className={location.pathname.startsWith("/stories") ? "current" : ""}>02 · ИСТОРИИ</span>
         <span className={location.pathname.startsWith("/statistics") ? "current" : ""}>03 · СТАТИСТИКА</span>
+        <span className={finalSurface ? "current" : ""}>04 · ИТОГОВЫЙ ТЕСТ</span>
       </div>
       <main
         id="main"
         ref={main}
         tabIndex="-1"
-        className={storyTheme ? "story-main" : location.pathname === "/stories" ? "selection-main" : location.pathname.startsWith("/statistics") ? "statistics-main" : location.pathname === "/" ? "home-main" : "page-main"}
+        className={storyTheme ? "story-main" : location.pathname === "/stories" ? "selection-main" : location.pathname.startsWith("/statistics") || finalSurface ? `statistics-main${finalSurface ? " final-test-main" : ""}` : location.pathname === "/" ? "home-main" : "page-main"}
       >
         {!storageAvailable && (
           <p role="status" className="note">
@@ -134,6 +138,7 @@ function App() {
             <Route path="/stories" element={<StorySelection />} />
             <Route path="/stories/:storyId/:stepId" element={<StoryPage />} />
             <Route path="/statistics/:screenId" element={<StatisticsPage />} />
+            <Route path="/final-test/:questionId" element={<FinalTestPage />} />
             <Route path="/complete" element={<Completion />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

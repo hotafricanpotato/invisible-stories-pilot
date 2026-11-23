@@ -124,7 +124,7 @@ test("pilot migration keeps old statistics and all story data but rejects every 
     assert.equal(model.canEnterStats(s),true);
     assert.equal(model.allowedPath('/statistics/4',s),'/statistics/3');
     assert.deepEqual(s.stats,old.stats);
-    assert.equal(model.allowedPath('/complete',s),'/complete');
+    assert.equal(model.allowedPath('/complete',s),'/final-test/1');
   }
 });
 test("full completion, reset and repeat completion unlock statistics without quiz or legacy flags",()=>{

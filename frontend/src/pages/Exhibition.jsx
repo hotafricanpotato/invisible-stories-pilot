@@ -113,10 +113,10 @@ export function Completion() {
       </div>
       <h1>Спасибо за участие</h1>
       <p className="lead">
-        Вы прошли истории Лизы, Никиты и Ильи и раздел «Невидимая статистика».
+        Вы прошли истории Лизы, Никиты и Ильи, раздел «Невидимая статистика» и итоговый тест.
       </p>
       <p>
-        Итоговый тест и эпилог пока не подключены.
+        Эпилог пока не подключён.
       </p>
       <Note>
         <p>
@@ -128,7 +128,7 @@ export function Completion() {
       <Navigation
         back
         next
-        onBack={() => nav("/statistics/3")}
+        onBack={() => nav("/final-test/review")}
         onNext={() => nav("/")}
         nextLabel="Вернуться на главную →"
       />

@@ -31,7 +31,7 @@ test('canonical page, every legacy URL and completion require all three stories'
  assert.equal(allowedPath('/complete',s),'/statistics/1');
  const before=structuredClone(s.stories);
  s=reducer(s,{type:'STATS_COMPLETE'});assert.equal(s.stats.completed,true);assert.equal(s.stats.unlocked,3);
- assert.deepEqual(s.stories,before);assert.equal(allowedPath('/complete',s),'/complete');
+ assert.deepEqual(s.stories,before);assert.equal(allowedPath('/complete',s),'/final-test/1');
  assert.deepEqual(restore(JSON.stringify(s)),s);
 });
 test('old opened screens, filters, answers and completion are retained on canonical migration',()=>{

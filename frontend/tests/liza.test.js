@@ -125,7 +125,7 @@ test("sequential access requires Liza first; all three stories are now enabled",
   assert.equal(sequential.allowedPath("/stories/nikita/sunday",s),"/stories/nikita/sunday");
   assert.deepEqual(Object.keys(storyRegistry),["liza","nikita","ilya"]);
   assert.deepEqual(exhibitionConfig.availableStoryIds,["liza","nikita","ilya"]);
-  assert.equal(exhibitionConfig.finalQuizEnabled,false);
+  assert.equal(exhibitionConfig.finalQuizEnabled,true);
 });
 
 

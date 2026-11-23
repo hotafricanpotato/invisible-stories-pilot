@@ -158,7 +158,7 @@ test("complete pilot, statistics, storage roundtrip and reset", () => {
   for (let i = 0; i < 3; i++) s = apply(s, "STATS_ADVANCE", { index: i });
   assert.equal(allowedPath("/complete", s), "/statistics/1");
   s = apply(s, "STATS_COMPLETE");
-  assert.equal(allowedPath("/complete", s), "/complete");
+  assert.equal(allowedPath("/complete", s), "/final-test/1");
   assert.deepEqual(restore(JSON.stringify(s)), s);
   assert.deepEqual(apply(s, "RESET"), initialState());
 });
@@ -189,7 +189,7 @@ test("v1 migration retains completed pilot, quiz, materials, map and statistics"
   assert.deepEqual(b.stories.nikita.opened, legacy.nikita.opened);
   assert.deepEqual(b.stories.nikita.answers, legacy.nikita.answers);
   assert.deepEqual(b.stats, legacy.stats);
-  assert.equal(b.cursor, "/complete");
+  assert.equal(b.cursor, "/final-test/1");
   for (const scene of story.scenes)
     assert.equal(
       fragmentCount(b.stories.nikita, scene),

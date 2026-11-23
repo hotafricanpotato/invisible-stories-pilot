@@ -1,3 +1,4 @@
+import {completeFinalTestInBrowser} from "./support.js";
 import { expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -172,6 +173,7 @@ test("complete production exhibition, exact content, gates, reload, reset and no
   await page.getByRole('button',{name:'Далее',exact:true}).click();
   await noOverflow(page);
   await page.getByRole("button", { name: "Завершить просмотр" }).click();
+  await completeFinalTestInBrowser(page);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Спасибо за участие",
   );

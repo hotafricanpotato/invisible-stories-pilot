@@ -26,7 +26,7 @@ export default function StatisticsExhibition() {
     <nav className="statistics-completion" aria-label="Навигация по статистике">
       <button onClick={()=>nav(page === 1 ? "/stories" : `/statistics/${page-1}`)}>{page === 1 ? "Вернуться к историям" : "Назад"}</button>
       {page < 3 ? <button className="primary" onClick={()=>nav(`/statistics/${page+1}`)}>Далее</button> :
-      <button className="primary" onClick={()=>{dispatch({type:"STATS_COMPLETE"});nav("/complete");}}>Завершить просмотр</button>}
+      <button className="primary" onClick={()=>{dispatch({type:"STATS_COMPLETE"});nav("/final-test/1");}}>Завершить просмотр</button>}
     </nav>
   </article>;
 }
