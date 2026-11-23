@@ -1,4 +1,3 @@
-import questions from "../content/initialQuiz.json";
 import {
   createContext,
   useContext,
@@ -24,15 +23,9 @@ export function Provider({ children }) {
       setStorageAvailable(false);
     }
   }, [state]);
-  const initialScore = state.quiz.completed
-    ? questions.reduce(
-        (score, q, i) => score + Number(state.quiz.answers[i] === q.correct),
-        0,
-      )
-    : null;
   return (
     <Context.Provider
-      value={{ state, dispatch, storageAvailable, initialScore }}
+      value={{ state, dispatch, storageAvailable }}
     >
       {children}
     </Context.Provider>

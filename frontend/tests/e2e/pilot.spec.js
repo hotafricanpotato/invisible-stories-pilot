@@ -1,11 +1,10 @@
 import { expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { test, goNext, noOverflow, assertText, revealAll, finishQuiz } from "./support.js";
+import { test, goNext, noOverflow, assertText, revealAll, openSelection } from "./support.js";
 import { reducer, restore } from "../../src/state/model.js";
 import { storyRegistry, sceneFragments } from "../../src/content/storyRegistry.js";
 const artifacts = process.env.ARTIFACT_DIR || path.resolve("../../work");
-const quiz = JSON.parse(await readFile("src/content/initialQuiz.json", "utf8"));
 const story = JSON.parse(await readFile("src/content/nikita.json", "utf8"));
 const stats = JSON.parse(await readFile("src/content/statistics.json", "utf8"));
 // This regression explicitly starts with Liza completed, using real reducer actions.
@@ -50,36 +49,10 @@ test("complete production pilot, exact content, gates, reload, reset and no answ
   await page
     .getByRole("button", { name: /^(Начать|Продолжить) выставку →$/ })
     .click();
-  for (let i = 0; i < 5; i++) {
-    await assertText(page, quiz[i].situation);
-    await assertText(page, quiz[i].question);
-    for (const text of Object.values(quiz[i].options))
-      await assertText(page, text);
-    const next = page.getByRole("button", {
-      name: i === 4 ? "Завершить проверку →" : "Далее →",
-      exact: true,
-    });
-    await expect(next).toBeDisabled();
-    await expect(
-      page.getByText(quiz[i].explanation, { exact: true }),
-    ).toHaveCount(0);
-    await page
-      .getByRole("radio")
-      .nth(i % 4)
-      .check();
-    if (i === 1) {
-      await page.getByRole("button", { name: "← Назад", exact: true }).click();
-      await expect(page.getByRole("radio").nth(0)).toBeChecked();
-      await goNext(page);
-    }
-    await noOverflow(page);
-    await next.click();
-  }
-  await expect(page).toHaveURL(/quiz\/complete$/);
-  await expect(page.locator(".story-shell")).toHaveCount(0);
+  await expect(page).toHaveURL(/\/stories$/);
+  await expect(page.getByRole("radio")).toHaveCount(0);
   await completeLizaForNikitaRegression(page);
-  await page.getByRole("button", { name: "Перейти к истории →" }).click();
-  await page.getByRole("button", { name: "Начать историю Никиты →" }).click();
+  await page.locator('[aria-labelledby="card-nikita"]').getByRole("button", {name:"Начать историю",exact:true}).click();
   const scenes = [...story.stages[0].scenes, ...story.stages[1].scenes];
   for (let i = 0; i < 4; i++) {
     const scene = scenes[i];
@@ -182,7 +155,11 @@ test("complete production pilot, exact content, gates, reload, reset and no answ
   }
   for (const k of ["introduction", "final_text", "final_emphasis"])
     await assertText(page, end[k]);
-  await page.getByRole("button", { name: "К невидимой статистике →" }).click();
+  await page.getByRole("button", { name: "К выбору историй →" }).click();
+  await expect(page).toHaveURL(/\/stories$/);
+  await expect(page.getByRole("status")).toContainText("Теперь доступен раздел");
+  await expect(page.locator('[aria-labelledby="card-nikita"] .archive-card-status')).toHaveText("Пройдена");
+  await page.getByRole("button", {name:"Перейти к „Невидимой статистике“"}).click();
   await page.goto("http://pilot.test/statistics/4");
   await expect(page).toHaveURL(/statistics\/1$/);
   await expect(page.locator(".story-shell")).toHaveCount(0);
@@ -237,8 +214,11 @@ test("complete production pilot, exact content, gates, reload, reset and no answ
   await page.getByRole("button", { name: "Удалить прогресс и начать" }).click();
   await expect(page).toHaveURL("http://pilot.test/");
   await page.goto("http://pilot.test/complete");
-  await expect(page).toHaveURL(/quiz\/1$/);
-  await expect(page.getByRole("radio").first()).not.toBeChecked();
+  await expect(page).toHaveURL(/\/stories$/);
+  await expect(page.getByRole("radio")).toHaveCount(0);
+  await expect(page.locator('[aria-labelledby="card-liza"] .archive-card-status')).toHaveText("Доступна");
+  await expect(page.locator('[aria-labelledby="card-nikita"] button')).toBeDisabled();
+  await expect(page.getByRole("button", {name:"Перейти к „Невидимой статистике“"})).toBeDisabled();
   expect(errors).toEqual([]);
   expect(
     requests.filter(
@@ -249,46 +229,31 @@ test("complete production pilot, exact content, gates, reload, reset and no answ
     ),
   ).toEqual([]);
 });
-test("guarded direct links, small layouts, keyboard and unavailable storage", async ({
-  page,
-}) => {
-  await page.goto("http://pilot.test/statistics/4");
-  await expect(page).toHaveURL(/quiz\/1$/);
-  await page.goto("http://pilot.test/");
-  for (const width of [320, 390, 768, 1280]) {
-    await page.setViewportSize({ width, height: 900 });
-    await noOverflow(page);
+test("guarded direct links, small layouts, keyboard and unavailable storage", async ({page}) => {
+  for (const route of ["/statistics/4","/stories/nikita/map","/stories/ilya/introduction","/quiz/1","/quiz/complete"]) {
+    await page.goto(`http://pilot.test${route}`);
+    await expect(page).toHaveURL(/\/stories$/);
+    await expect(page.getByRole("radio")).toHaveCount(0);
   }
-  await page.setViewportSize({ width: 320, height: 900 });
-  await page
-    .getByRole("button", { name: /^(Начать|Продолжить) выставку →$/ })
-    .click();
-  await page.getByRole("radio").first().focus();
-  await page.keyboard.press("Space");
-  await expect(page.getByRole("radio").first()).toBeChecked();
-  await noOverflow(page);
-  await finishQuiz(page);
-  await page.goto("http://pilot.test/stories/nikita/map");
-  await expect(page).toHaveURL(/\/sunday$/);
+  for (const width of [320,390,768,1280]) {
+    await page.setViewportSize({width,height:900});await noOverflow(page);
+  }
+  const start=page.locator('[aria-labelledby="card-liza"] button');
+  await start.focus();await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/liza\/introduction$/);
   await page.addInitScript(() => {
-    Object.defineProperty(window, "sessionStorage", {
-      get() {
-        throw new Error("blocked");
-      },
-    });
+    Object.defineProperty(window,"sessionStorage",{get(){throw new Error("blocked");}});
   });
   await page.goto("http://pilot.test/");
-  await expect(page.getByRole("status")).toContainText(
-    "Хранилище браузера недоступно",
-  );
-  await page
-    .getByRole("button", { name: /^(Начать|Продолжить) выставку →$/ })
-    .click();
-  await expect(page.getByRole("radio")).toHaveCount(4);
+  await expect(page.getByRole("status")).toContainText("Хранилище браузера недоступно");
+  await page.getByRole("button",{name:/^(Начать|Продолжить) выставку →$/}).click();
+  await expect(page).toHaveURL(/\/stories$/);
+  await expect(page.locator('[aria-labelledby="card-liza"] button')).toBeEnabled();
 });
 
 test("single live reply, full chat, back, reload, keyboard and responsive layouts", async ({ page }, info) => {
-  await finishQuiz(page);
+  await openSelection(page);
+  await completeLizaForNikitaRegression(page);
   await page.goto("http://pilot.test/stories/nikita/sunday");
   await goNext(page);
   for (const message of story.stages[0].scenes[1].messages) await assertText(page, message.text);
@@ -364,6 +329,12 @@ test("existing v1 session migrates in the browser without replaying visited scen
     legacy,
   );
   await page.goto("http://pilot.test/stories/nikita/map");
+  await expect(page).toHaveURL(/\/stories$/);
+  let migrated=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")));
+  expect(migrated.stories.nikita.answers).toEqual(legacy.nikita.answers);
+  expect(migrated.stories.nikita.unlocked).toBe(5);
+  await completeLizaForNikitaRegression(page);
+  await page.goto("http://pilot.test/stories/nikita/map");
   await expect(
     page.getByRole("button", { name: "К заключению →" }),
   ).toBeEnabled();
@@ -384,7 +355,7 @@ test("existing v1 session migrates in the browser without replaying visited scen
   const saved = await page.evaluate(() =>
     JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")),
   );
-  expect(saved.version).toBe(4);
+  expect(saved.version).toBe(5);
   expect(saved.quiz).toEqual(legacy.quiz);
   expect(saved.stories.nikita.answers).toEqual(legacy.nikita.answers);
   expect(saved.stories.nikita.currentStepId).toBe("football");
@@ -392,7 +363,8 @@ test("existing v1 session migrates in the browser without replaying visited scen
 });
 
 test("v2 reading migration, theme tokens, material close and mobile reading", async ({ page }, info) => {
-  await finishQuiz(page);
+  await openSelection(page);
+  await completeLizaForNikitaRegression(page);
   await page.goto("http://pilot.test/stories/nikita/sunday");
   await goNext(page);
   await goNext(page);
@@ -440,7 +412,8 @@ test("v2 reading migration, theme tokens, material close and mobile reading", as
 
 
 test("full-window themes, comfortable reading, single navigation and zoom", async ({ page }, info) => {
-  await finishQuiz(page);
+  await openSelection(page);
+  await completeLizaForNikitaRegression(page);
   await page.goto("http://pilot.test/stories/nikita/sunday");
   for (const [theme, color] of [["nikita", "rgb(233, 217, 199)"], ["liza", "rgb(238, 230, 232)"], ["ilya", "rgb(231, 229, 217)"]]) {
     await page.locator(".story-shell").evaluate((el, theme) => { el.dataset.storyTheme = theme; }, theme);

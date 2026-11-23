@@ -75,14 +75,14 @@ test("mixed chat is one whole UI unit; live dialogue still has one current reply
     if(part.kind==="chat") assert.ok(part.messages.length>1);
   });
 });
-test("independent testing keeps stories isolated; all available stories gate statistics and reset", () => {
+test("sequential stories keep independent progress; required stories gate statistics and reset", () => {
   let s=quizDone();
-  assert.equal(model.allowedPath("/stories/nikita/sunday",s),"/stories/nikita/sunday");
+  assert.equal(model.allowedPath("/stories/nikita/sunday",s),"/stories");
   assert.equal(model.allowedPath("/stories/liza/introduction",s),"/stories/liza/introduction");
   const untouched=structuredClone(s.stories.nikita),quiz=structuredClone(s.quiz);
   s=finish(s,"liza");
   assert.deepEqual(s.stories.nikita,untouched);assert.deepEqual(s.quiz,quiz);
-  assert.equal(model.allowedPath("/statistics/1",s),"/stories/nikita/sunday");
+  assert.equal(model.allowedPath("/statistics/1",s),"/stories");
   assert.equal(s.stories.liza.completed,true);
   s=finish(s,"nikita");assert.equal(model.allowedPath("/statistics/1",s),"/statistics/1");
   assert.deepEqual(model.restore(JSON.stringify(s)),s);
@@ -105,8 +105,8 @@ test("old v1/v2/v3 Nikita sessions keep partial progress, materials, map, stats 
     }
     if(version===1) { input.nikita=input.stories.nikita;delete input.stories; }
     const restored=model.restore(JSON.stringify(input));
-    assert.equal(restored.version,4);
-    assert.equal(restored.cursor,input.cursor);
+    assert.equal(restored.version,5);
+    assert.equal(restored.cursor,"/stories");
     assert.equal(restored.stories.nikita.unlocked,done?6:2);
     assert.deepEqual(restored.stories.nikita.opened,done?complete.stories.nikita.opened:[]);
     assert.deepEqual(restored.stories.nikita.answers,done?complete.stories.nikita.answers:{});
@@ -119,7 +119,7 @@ test("old v1/v2/v3 Nikita sessions keep partial progress, materials, map, stats 
 test("sequential future configuration requires Liza first without registering Ilya", () => {
   const sequential=createExhibitionModel(storyRegistry,{storyAccess:"sequential"});
   let s=quizDone(sequential);
-  assert.equal(sequential.allowedPath("/stories/nikita/sunday",s),"/stories/liza/introduction");
+  assert.equal(sequential.allowedPath("/stories/nikita/sunday",s),"/stories");
   s=finish(s,"liza",sequential);
   assert.equal(sequential.allowedPath("/stories/nikita/sunday",s),"/stories/nikita/sunday");
   assert.deepEqual(Object.keys(storyRegistry),["liza","nikita"]);
@@ -134,7 +134,7 @@ test("adding a third registry module automatically extends the statistics gate",
   const m=createExhibitionModel(registry,{storyAccess:"sequential"});
   let s=quizDone(m);
   s=finish(s,"liza",m,registry);s=finish(s,"nikita",m,registry);
-  assert.equal(m.allowedPath("/statistics/1",s),"/stories/test-third/sunday");
+  assert.equal(m.allowedPath("/statistics/1",s),"/stories");
   s=finish(s,"test-third",m,registry);
   assert.equal(m.allowedPath("/statistics/1",s),"/statistics/1");
 });

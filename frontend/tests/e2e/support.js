@@ -59,16 +59,7 @@ export async function revealAll(page) {
   }
   return text;
 }
-export async function finishQuiz(page) {
-  await page.goto("http://pilot.test/quiz/1");
-  for (let i = 0; i < 5; i++) {
-    await expect(page).toHaveURL(new RegExp(`/quiz/${i + 1}$`));
-    await page.getByRole("radio").nth(1).check();
-    await page
-      .getByRole("button", {
-        name: i === 4 ? "Завершить проверку →" : "Далее →",
-        exact: true,
-      })
-      .click();
-  }
+export async function openSelection(page) {
+  await page.goto("http://pilot.test/stories");
+  await expect(page.getByRole("heading", {level: 1})).toHaveText("Три истории. Три разных дома.");
 }

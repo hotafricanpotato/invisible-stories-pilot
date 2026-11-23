@@ -3,11 +3,14 @@ export const exhibitionConfig = {
   mode: "pilot",
   availableStoryIds: ["liza", "nikita"],
   storyOrder: ["liza", "nikita", "ilya"],
-  // Temporary testing mode; switch to sequential when the full selection flow is ready.
-  storyAccess: "independent",
-  postStoriesPath: "/statistics/1",
-  postStoriesLabel: "К невидимой статистике →",
+  storyAccess: "sequential",
+  statisticsRequiredStoryIds: {
+    pilot: ["liza", "nikita"],
+    full: ["liza", "nikita", "ilya"],
+  },
+  postStoriesPath: "/stories",
   fullVersionStoryCount: 3,
   finalQuizEnabled: false,
+  epilogueEnabled: false,
   contentVersion: "pilot-1",
 };

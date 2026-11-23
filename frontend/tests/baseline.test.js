@@ -21,16 +21,11 @@ test("approved pilot content, statistics implementation, Vercel and all images r
     );
 });
 
-test("initial quiz UI and interaction code is unchanged", async () => {
-  const source = await readFile(
-    new URL("../src/pages/Exhibition.jsx", import.meta.url),
-    "utf8",
-  );
-  const fn = source
-    .split("export function Quiz()")[1]
-    .split("export function Transition()")[0];
-  assert.equal(
-    createHash("sha256").update(fn).digest("hex"),
-    baseline["@Quiz"],
-  );
+test("entry quiz routes and score calculations are absent from the active interface", async () => {
+  const main = await readFile(new URL("../src/main.jsx", import.meta.url), "utf8");
+  const exhibition = await readFile(new URL("../src/pages/Exhibition.jsx", import.meta.url), "utf8");
+  const provider = await readFile(new URL("../src/state/Provider.jsx", import.meta.url), "utf8");
+  assert.doesNotMatch(main, /element=\{<(Quiz|Transition)/);
+  assert.doesNotMatch(exhibition, /initialQuiz|quizPath|первоначальная проверка|сравнение ответов до и после/i);
+  assert.doesNotMatch(provider, /initialScore|initialQuiz/);
 });

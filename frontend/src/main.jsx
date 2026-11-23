@@ -14,12 +14,11 @@ import { allowedPath } from "./state/model";
 import { storyRegistry } from "./content/storyRegistry.js";
 import {
   Home,
-  Quiz,
-  Transition,
-  Selection,
   StatisticsPage,
   Completion,
 } from "./pages/Exhibition";
+import StorySelection from "./pages/StorySelection";
+import "./styles/story-selection.css";
 import StoryPage from "./pages/StoryPage";
 import "./styles.css";
 function App() {
@@ -56,7 +55,7 @@ function App() {
     if (resetOpen) cancel.current?.focus();
   }, [resetOpen]);
   return (
-    <div className={storyTheme ? "app-shell story-shell" : "app-shell"} data-story-theme={storyTheme}>
+    <div className={storyTheme ? "app-shell story-shell" : location.pathname === "/stories" ? "app-shell selection-shell" : "app-shell"} data-story-theme={storyTheme}>
       <a className="skip-link" href="#main">
         К содержанию
       </a>
@@ -110,29 +109,15 @@ function App() {
         </div>
       )}
       <div className="route-strip" aria-label="Маршрут выставки">
-        <span
-          className={location.pathname.startsWith("/quiz") ? "current" : ""}
-        >
-          01 · ВОСПРИЯТИЕ
-        </span>
-        <span
-          className={location.pathname.startsWith("/stories") ? "current" : ""}
-        >
-          02 · ИСТОРИЯ
-        </span>
-        <span
-          className={
-            location.pathname.startsWith("/statistics") ? "current" : ""
-          }
-        >
-          03 · КОНТЕКСТ
-        </span>
+        <span className={location.pathname === "/" ? "current" : ""}>01 · ГЛАВНАЯ</span>
+        <span className={location.pathname.startsWith("/stories") ? "current" : ""}>02 · ИСТОРИИ</span>
+        <span className={location.pathname.startsWith("/statistics") ? "current" : ""}>03 · СТАТИСТИКА</span>
       </div>
       <main
         id="main"
         ref={main}
         tabIndex="-1"
-        className={storyTheme ? "story-main" : location.pathname === "/" ? "home-main" : "page-main"}
+        className={storyTheme ? "story-main" : location.pathname === "/stories" ? "selection-main" : location.pathname === "/" ? "home-main" : "page-main"}
       >
         {!storageAvailable && (
           <p role="status" className="note">
@@ -145,9 +130,7 @@ function App() {
         ) : (
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/quiz/complete" element={<Transition />} />
-            <Route path="/quiz/:questionId" element={<Quiz />} />
-            <Route path="/stories" element={<Selection />} />
+            <Route path="/stories" element={<StorySelection />} />
             <Route path="/stories/:storyId/:stepId" element={<StoryPage />} />
             <Route path="/statistics/:screenId" element={<StatisticsPage />} />
             <Route path="/complete" element={<Completion />} />

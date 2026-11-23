@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test, finishQuiz, goNext, assertText, noOverflow } from "./support.js";
+import { test, openSelection, goNext, assertText, noOverflow, revealAll } from "./support.js";
 import { storyRegistry, sceneFragments } from "../../src/content/storyRegistry.js";
 import path from "node:path";
 import { reducer } from "../../src/state/model.js";
@@ -44,11 +44,10 @@ test("Liza full approved scenario, independent progress, album, gates and exact 
   const errors=[],requests=[];
   page.on("pageerror",e=>errors.push(e.message));
   page.on("request",r=>requests.push({url:r.url(),method:r.method(),body:r.postData()}));
-  await finishQuiz(page);
+  await openSelection(page);
   const quizBefore=(await saved(page)).quiz;
   const nikitaBefore=(await saved(page)).stories.nikita;
-  await page.getByRole("button",{name:"Перейти к истории →"}).click();
-  await page.getByRole("button",{name:"Начать историю Лизы →"}).click();
+  await page.locator('[aria-labelledby="card-liza"] button').click();
   await expect(page.locator(".story-shell")).toHaveCSS("background-color","rgb(238, 230, 232)");
   await goNext(page);
   const intro=liza.scenes[0];
@@ -121,20 +120,42 @@ test("Liza full approved scenario, independent progress, album, gates and exact 
   await expect(page).toHaveURL(/\/last-scene$/);
   await expect(page.getByRole("status")).toHaveText("Фрагмент 4 из 4");
   await goNext(page);
-  await page.getByRole("button",{name:"Продолжить выставку — история Никиты"}).click();
+  await page.getByRole("button",{name:"К выбору историй →"}).click();
   const end=await saved(page);
   expect(end.stories.liza.completed).toBe(true);
   expect(end.stories.nikita).toEqual(nikitaBefore);
   expect(end.quiz).toEqual(quizBefore);
-  await expect(page).toHaveURL(/\/nikita\/sunday$/);
+  await expect(page).toHaveURL(/\/stories$/);
+  await expect(page.getByRole("status")).toHaveText("История Лизы завершена. Теперь доступна история Никиты");
+  await expect(page.locator('[aria-labelledby="card-liza"] .archive-card-status')).toHaveText("Пройдена");
+  await expect(page.locator('[aria-labelledby="card-nikita"] .archive-card-status')).toHaveText("Доступна");
+  await page.getByRole("button",{name:"Скрыть уведомление"}).click();
+  await expect(page.locator(".selection-notice")).toHaveCount(0);
   await page.goto("http://pilot.test/statistics/1");
-  await expect(page).toHaveURL(/\/nikita\/sunday$/);
+  await expect(page).toHaveURL(/\/stories$/);
+  // Continue the same browser session through Nikita and statistics: no seeded completion.
+  await page.locator('[aria-labelledby="card-nikita"]').getByRole("button",{name:"Начать историю",exact:true}).click();
+  for(const scene of storyRegistry.nikita.scenes) { await revealAll(page);await goNext(page); }
+  for(const material of await page.locator(".material").all())
+    await material.getByRole("button",{name:"Открыть материал ↓"}).click();
+  await page.getByRole("button",{name:"К карте невидимого →"}).click();
+  for(const question of await page.locator(".map-question").all()) await question.getByRole("radio").first().check();
+  await page.getByRole("button",{name:"Раскрыть связи"}).click();
+  await page.getByRole("button",{name:"К заключению →"}).click();
+  await page.getByRole("button",{name:"К выбору историй →"}).click();
+  await expect(page).toHaveURL(/\/stories$/);
+  await expect(page.getByRole("status")).toContainText("Теперь доступен раздел");
+  await page.getByRole("button",{name:"Перейти к „Невидимой статистике“"}).click();
+  await expect(page).toHaveURL(/statistics\/1$/);
+  await goNext(page);await goNext(page);await goNext(page);
+  await page.getByRole("button",{name:"Завершить пилот →"}).click();
+  await expect(page).toHaveURL(/\/complete$/);
   expect(errors).toEqual([]);
   expect(requests.filter(r=>new URL(r.url).origin!=="http://pilot.test"||r.method!=="GET"||r.body)).toEqual([]);
 });
 
 test("Liza responsive content and independent story resume",async({page},info)=>{
-  await finishQuiz(page);
+  await openSelection(page);
   await page.goto("http://pilot.test/stories/liza/introduction");
   await goNext(page);
   for(const width of [360,390,430,1280,1920]) {
@@ -145,7 +166,7 @@ test("Liza responsive content and independent story resume",async({page},info)=>
   await page.setViewportSize(info.project.use.viewport);
   const before=(await saved(page)).stories.liza;
   await page.goto("http://pilot.test/stories/nikita/sunday");
-  await goNext(page);await goNext(page);await goNext(page);
+  await expect(page).toHaveURL(/\/stories$/);
   await page.reload();
   expect((await saved(page)).stories.liza).toEqual(before);
   await page.goto("http://pilot.test/stories/liza/introduction");
@@ -154,7 +175,7 @@ test("Liza responsive content and independent story resume",async({page},info)=>
 });
 
 
-test("completed v3 pilot keeps statistics and completion while Liza starts independently",async({page})=>{
+test("completed v3 pilot keeps data and replay while statistics waits for Liza",async({page})=>{
   await page.goto("http://pilot.test/");
   await page.evaluate(()=>sessionStorage.setItem("invisible-stories:pilot:v1",JSON.stringify({
     version:3,contentVersion:"pilot-1",cursor:"/complete",
@@ -166,10 +187,10 @@ test("completed v3 pilot keeps statistics and completion while Liza starts indep
     stats:{unlocked:3,completed:true,filter:"Только нефизические",expanded:["global"],answer:1,revealed:true}
   })));
   await page.goto("http://pilot.test/complete");
-  await expect(page.getByRole("heading",{level:1})).toHaveText("Спасибо за участие");
+  await expect(page).toHaveURL(/\/stories$/);
   const old=await saved(page);expect(old.legacyStatsAccess).toBe(true);
   await page.goto("http://pilot.test/statistics/4");
-  await expect(page).toHaveURL(/statistics\/4$/);
+  await expect(page).toHaveURL(/\/stories$/);
   await page.goto("http://pilot.test/stories/liza/introduction");
   await goNext(page);await page.reload();
   const current=await saved(page);
@@ -183,7 +204,7 @@ test("completed v3 pilot keeps statistics and completion while Liza starts indep
 
 test("all seven approved images keep full composition on desktop and mobile", async({page},info)=>{
   // Real reducer actions prepare reached steps; the full-route test above covers the gates.
-  await finishQuiz(page);
+  await openSelection(page);
   let state=await saved(page);
   for(let i=0;i<liza.steps.length;i++) {
     const step=liza.steps[i];

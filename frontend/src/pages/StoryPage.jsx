@@ -1,4 +1,3 @@
-import { exhibitionConfig } from "../content/exhibitionConfig.js";
 import { useNavigate, useParams } from "react-router-dom";
 import { storyRegistry, sceneFragments, fragmentRange } from "../content/storyRegistry.js";
 import { useExhibition } from "../state/Provider";
@@ -22,17 +21,11 @@ export default function StoryPage() {
   const end = story.conclusion;
   const send = (type, data = {}) => dispatch({ type, storyId, ...data });
   const last = index === story.steps.length - 1;
-  const previousStoryId =
-    Object.keys(storyRegistry)[Object.keys(storyRegistry).indexOf(storyId) - 1];
-  const nextStoryId = Object.keys(storyRegistry).find(id => id !== storyId && !state.stories[id].completed);
-  const afterStoriesPath = exhibitionConfig.postStoriesPath;
-  const nextStoryLabel = nextStoryId ? `К истории ${storyRegistry[nextStoryId].presentation.materialsCharacterName ?? storyRegistry[nextStoryId].character} →` : exhibitionConfig.postStoriesLabel;
-  const goBack = () => nav(index ? storyPath(index - 1, storyId)
-    : previousStoryId && exhibitionConfig.storyAccess !== "independent" ? storyPath(storyRegistry[previousStoryId].steps.length - 1, previousStoryId) : "/stories");
+  const goBack = () => nav(index ? storyPath(index - 1, storyId) : "/stories");
   const goForward = () => {
     if (last) {
       send("STORY_COMPLETE");
-      nav(nextStoryId ? storyPath(state.stories[nextStoryId].unlocked, nextStoryId) : afterStoriesPath);
+      nav("/stories", { state: { completedStoryId: p.completed ? null : storyId } });
     } else {
       send("STORY_ADVANCE", { index });
       nav(storyPath(index + 1, storyId));
@@ -112,7 +105,7 @@ export default function StoryPage() {
         onBack={goBack} onNext={goForward}
         nextLabel={step.kind === "materials" ? "К карте невидимого →"
           : step.kind === "map" ? "К заключению →"
-          : last ? (step.kind === "closing" && story.presentation.closing?.nextLabels?.[nextStoryId]) || nextStoryLabel : "Далее →"} />}
+          : last ? "К выбору историй →" : "Далее →"} />}
     </div>
   );
 }

@@ -75,15 +75,14 @@ function finishStory(
   return model.reducer(s, { type: "STORY_COMPLETE", storyId: id });
 }
 
-test("quiz answers and direct-link guards retain pilot rules", () => {
+test("archived quiz is optional; old URLs redirect to selection", () => {
   const s = initialState();
   assert.equal(apply(s, "QUIZ_COMPLETE").quiz.completed, false);
-  for (const p of ["/quiz/5", "/stories", "/statistics/4", "/complete"])
-    assert.equal(allowedPath(p, s), "/quiz/1");
-  const b = quizDone();
-  assert.equal(allowedPath("/stories", b), "/stories");
-  assert.equal(allowedPath(storyPath(6), b), storyPath(0));
-  assert.equal(allowedPath("/stories/missing/map", b), "/stories");
+  for (const p of ["/quiz/1", "/quiz/5", "/quiz/complete", "/stories", "/statistics/4", "/complete"])
+    assert.equal(allowedPath(p, s), "/stories");
+  assert.equal(allowedPath(storyPath(0), s), storyPath(0));
+  assert.equal(allowedPath(storyPath(6), s), storyPath(0));
+  assert.equal(allowedPath("/stories/missing/map", s), "/stories");
   assert.deepEqual(apply(s, "QUIZ_ANSWER", { id: "bad", value: "Z" }), s);
 });
 test("one action reveals exactly one fragment; unread scenes cannot be skipped", () => {
@@ -184,7 +183,7 @@ test("v1 migration retains completed pilot, quiz, materials, map and statistics"
     revealed: true,
   };
   const b = restore(JSON.stringify(legacy));
-  assert.equal(b.version, 4);
+  assert.equal(b.version, 5);
   assert.deepEqual(b.quiz, legacy.quiz);
   assert.equal(b.stories.nikita.completed, true);
   assert.deepEqual(b.stories.nikita.opened, legacy.nikita.opened);
@@ -258,7 +257,7 @@ test("independent stories with the same scene/material/question ids do not share
   let s = quizDone(model);
   assert.equal(
     model.allowedPath(model.storyPath(0, "test-copy"), s),
-    model.storyPath(0, "nikita"),
+    "/stories",
   );
   s = finishStory(s, model);
   const first = structuredClone(s.stories.nikita);
@@ -279,7 +278,7 @@ test("independent stories with the same scene/material/question ids do not share
   assert.deepEqual(s.stories["test-copy"].answers, {});
   assert.equal(
     model.allowedPath("/statistics/1", s),
-    model.storyPath(1, "test-copy"),
+    "/stories",
   );
   assert.deepEqual(model.restore(JSON.stringify(s)), s);
   s = finishStory(s, model, "test-copy", copy);
