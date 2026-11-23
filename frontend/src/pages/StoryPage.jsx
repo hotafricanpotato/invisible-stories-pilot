@@ -85,7 +85,8 @@ export default function StoryPage() {
               ))}
             </div>
           )}
-          {end.final_text && <div className="ending">
+          {end.final_text && <div className={story.id === "ilya" ? "ending ilya-context-note" : "ending"}>
+            {story.id === "ilya" && <p className="eyebrow">Дополнительный контекст</p>}
             <Paragraphs text={end.final_text} />
             {end.final_emphasis && (
               <p className="emphasis">{end.final_emphasis}</p>

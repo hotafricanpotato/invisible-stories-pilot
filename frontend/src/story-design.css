@@ -240,3 +240,28 @@
   .story-shell .story-design--closing > .step-nav { flex-direction: column-reverse; align-items: stretch; gap: 8px; }
   .story-shell .story-design--closing > .step-nav button { max-width: 100%; width: 100%; }
 }
+
+/* Ilya only: the four factor cards and all other story screens are unchanged. */
+.story-shell[data-story-theme="ilya"] .ilya-context-note {
+  width: 100%; max-width: none; margin: 32px 0 28px;
+  padding: clamp(20px, 2.5vw, 28px);
+  background: var(--story-surface); border-top: 1px solid var(--story-light);
+}
+.story-shell[data-story-theme="ilya"] .ilya-context-note .eyebrow {
+  margin: 0 0 14px; font: 500 11px/1.5 Arial, sans-serif;
+  letter-spacing: .12em; color: var(--story-accent);
+}
+.story-shell[data-story-theme="ilya"] .ilya-context-note > p:not(.eyebrow) {
+  margin: 0; font-size: clamp(18px, 1.5vw, 21px); line-height: 1.7;
+}
+.story-shell[data-story-theme="ilya"] .closing-card {
+  padding: clamp(28px, 4vw, 48px);
+}
+.story-shell[data-story-theme="ilya"] .closing-card .closing-kicker { margin-bottom: 20px; }
+.story-shell[data-story-theme="ilya"] .closing-card .closing-lead { max-width: 30ch; margin-bottom: 28px; }
+.story-shell[data-story-theme="ilya"] .closing-card .closing-body { max-width: 54ch; }
+.story-shell[data-story-theme="ilya"] .closing-card .closing-body p + p { margin-top: 24px; }
+.story-shell[data-story-theme="ilya"] .closing-card .closing-end-label {
+  margin-top: 32px; padding-top: 18px;
+  border-top: 1px solid var(--story-light); text-align: right;
+}
