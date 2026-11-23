@@ -1,7 +1,7 @@
 import { test as base, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-const root = path.resolve("dist");
+const root = path.resolve(process.env.PILOT_BUILD_DIR || "dist");
 const artifacts = process.env.ARTIFACT_DIR || path.resolve("../../work");
 // Serve the real production bundle inside the browser runner. No preview relay,
 // external server, or external network is required for these tests.

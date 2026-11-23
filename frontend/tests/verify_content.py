@@ -55,3 +55,13 @@ ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
 paragraphs = [''.join(node.text or '' for node in p.findall('.//w:t', ns)) for p in document.findall('./w:body/w:p', ns)]
 assert paragraphs == fixture['paragraphs']
 print('PASS original Liza DOCX and exact source-paragraph extraction (scenario 2.0)')
+
+# Ilya's DOCX is the only approved source for scenario 4.0.
+source = ROOT / 'frontend/docs/sources/ilya-scenario-4.0.docx'
+fixture = json.loads((ROOT / 'frontend/tests/fixtures/ilya-v4-source.json').read_text())
+assert hashlib.sha256(source.read_bytes()).hexdigest() == fixture['sha256']
+with ZipFile(source) as archive:
+    document = ET.fromstring(archive.read('word/document.xml'))
+paragraphs = [''.join(node.text or '' for node in p.findall('.//w:t', ns)) for p in document.findall('./w:body/w:p', ns)]
+assert paragraphs == fixture['paragraphs']
+print('PASS original Ilya DOCX and exact source-paragraph extraction (scenario 4.0)')

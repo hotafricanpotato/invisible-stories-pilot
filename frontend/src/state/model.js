@@ -11,6 +11,10 @@ const blankStory = (story) => ({
   answers: {},
   revealed: false,
   completed: false,
+  ...(story.materials.some(m => m.type === "dialogue") ? {
+    materialPositions: Object.fromEntries(story.materials.filter(m => m.type === "dialogue").map(m => [m.id, 1])),
+    reachedMaterialPositions: Object.fromEntries(story.materials.filter(m => m.type === "dialogue").map(m => [m.id, 1])),
+  } : {}),
   currentFragments: Object.fromEntries(story.scenes.map((scene) => [scene.id, 1])),
   revealedFragments: Object.fromEntries(
     story.scenes.map((scene) => [scene.id, 1]),
@@ -23,7 +27,7 @@ export const quizPath = (i) => `/quiz/${i + 1}`;
 export function createExhibitionModel(registry, options = {}) {
   const ids = Object.keys(registry);
   const initialState = () => ({
-    version: 5,
+    version: 6,
     contentVersion: exhibitionConfig.contentVersion,
     cursor: "/",
     legacyStoryAccess: [],
@@ -46,7 +50,8 @@ export function createExhibitionModel(registry, options = {}) {
   const order = options.storyOrder ?? ids;
   const requiredIds = options.statisticsRequiredStoryIds?.[options.mode]
     ?? (options.mode === "full" ? order : ids);
-  const canEnter = (s, id) => Object.hasOwn(registry, id) && order.includes(id) && (
+  const canEnter = (s, id) => Object.hasOwn(registry, id) && order.includes(id) &&
+    (!options.availableStoryIds || options.availableStoryIds.includes(id)) && (
     s.stories[id]?.completed === true ||
     order.slice(0, order.indexOf(id)).every(previous => s.stories[previous]?.completed === true)
   );
@@ -73,6 +78,9 @@ export function createExhibitionModel(registry, options = {}) {
   };
   const fragmentCount = (progress, scene) =>
     count(progress.revealedFragments[scene.id], sceneFragments(scene).length);
+  const materialComplete = (story, progress, material) =>
+    progress.opened.includes(material.id) && (story.presentation.materialCompletion !== "read" || material.type !== "dialogue" ||
+      count(progress.reachedMaterialPositions?.[material.id], material.fragments.length) >= material.fragments.length);
   const stepComplete = (story, progress, index) => {
     const step = story.steps[index];
     if (step.kind === "scene")
@@ -80,7 +88,7 @@ export function createExhibitionModel(registry, options = {}) {
         fragmentCount(progress, step.scene) >= sceneFragments(step.scene).length
       );
     if (step.kind === "materials")
-      return story.materials.every((m) => progress.opened.includes(m.id));
+      return story.materials.every((m) => materialComplete(story, progress, m));
     if (step.kind === "map") return progress.revealed;
     return true;
   };
@@ -183,6 +191,18 @@ export function createExhibitionModel(registry, options = {}) {
               opened: [...new Set([...p.opened, a.id])],
             })
           : s;
+      case "MATERIAL_POSITION": {
+        const m = story.materials.find(m => m.id === a.id && m.type === "dialogue");
+        if (!m || p.active !== m.id || !p.opened.includes(m.id) ||
+          p.unlocked < story.steps.findIndex(step => step.kind === "materials") || !Number.isInteger(a.position)) return s;
+        const reached = count(p.reachedMaterialPositions?.[m.id], m.fragments.length);
+        if (a.position < 1 || a.position > m.fragments.length || a.position > reached + 1) return s;
+        if (p.materialPositions?.[m.id] === a.position && reached >= a.position) return s;
+        return update({
+          materialPositions: {...p.materialPositions, [m.id]: a.position},
+          reachedMaterialPositions: {...p.reachedMaterialPositions, [m.id]: Math.max(reached, a.position)},
+        });
+      }
       case "MAP_ANSWER": {
         const q = story.questions.find((q) => q.id === a.id);
         return !p.revealed &&
@@ -241,7 +261,7 @@ export function createExhibitionModel(registry, options = {}) {
     try {
       const input = JSON.parse(raw);
       if (
-        ![1, 2, 3, 4, 5].includes(input?.version) ||
+        ![1, 2, 3, 4, 5, 6].includes(input?.version) ||
         input.contentVersion !== exhibitionConfig.contentVersion
       )
         return initialState();
@@ -295,6 +315,10 @@ export function createExhibitionModel(registry, options = {}) {
           p.currentFragments[scene.id] = input.version >= 3
             ? count(saved.currentFragments?.[scene.id], p.revealedFragments[scene.id])
             : p.revealedFragments[scene.id];
+        }
+        for (const material of story.materials.filter(m => m.type === "dialogue")) {
+          p.reachedMaterialPositions[material.id] = count(saved.reachedMaterialPositions?.[material.id], material.fragments.length);
+          p.materialPositions[material.id] = count(saved.materialPositions?.[material.id], p.reachedMaterialPositions[material.id]);
         }
         for (let index = 0; index < p.unlocked; index++)
           if (!stepComplete(story, p, index)) {
@@ -359,6 +383,7 @@ export function createExhibitionModel(registry, options = {}) {
     storyPath,
     fragmentCount,
     stepComplete,
+    materialComplete,
     allStoriesComplete,
     canEnter,
     canEnterStats,
@@ -375,6 +400,7 @@ export const {
   storyPath,
   fragmentCount,
   stepComplete,
+  materialComplete,
   allStoriesComplete,
   canEnter,
   canEnterStats,

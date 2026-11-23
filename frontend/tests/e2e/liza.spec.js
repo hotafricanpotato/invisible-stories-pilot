@@ -136,9 +136,11 @@ test("Liza full approved scenario, independent progress, album, gates and exact 
   // Continue the same browser session through Nikita and statistics: no seeded completion.
   await page.locator('[aria-labelledby="card-nikita"]').getByRole("button",{name:"Начать историю",exact:true}).click();
   for(const scene of storyRegistry.nikita.scenes) { await revealAll(page);await goNext(page); }
+  await expect(page.locator(".material")).toHaveCount(3);
   for(const material of await page.locator(".material").all())
     await material.getByRole("button",{name:"Открыть материал ↓"}).click();
   await page.getByRole("button",{name:"К карте невидимого →"}).click();
+  await expect(page.locator(".map-question")).toHaveCount(3);
   for(const question of await page.locator(".map-question").all()) await question.getByRole("radio").first().check();
   await page.getByRole("button",{name:"Раскрыть связи"}).click();
   await page.getByRole("button",{name:"К заключению →"}).click();

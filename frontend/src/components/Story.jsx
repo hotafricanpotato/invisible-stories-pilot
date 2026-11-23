@@ -70,7 +70,7 @@ export function Scene({ scene, story, position, onPosition }) {
   useEffect(() => { onPosition(position); }, [scene.id, position]);
   const current = parts.slice(range.start - 1, range.end);
   return <>
-    <h1>{scene.title}</h1>
+    {scene.title && <h1>{scene.title}</h1>}
     {scene.time && <p className="caption">{scene.time}</p>}
     <div className={scene.type === "messages" || current[0]?.kind === "chat" ? "story-chat-layout" : "story-scene-layout"}>
       <SceneArtwork art={story.presentation.artwork?.[scene.id]} />

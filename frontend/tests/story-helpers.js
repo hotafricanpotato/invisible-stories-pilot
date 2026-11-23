@@ -10,8 +10,11 @@ export function finishStory(state, id, model, registry) {
         state = next;
       }
     }
-    if (step.kind === "materials") for (const material of story.materials)
+    if (step.kind === "materials") for (const material of story.materials) {
       state = model.reducer(state, { type: "MATERIAL", storyId: id, id: material.id });
+      if (material.type === "dialogue") for (let position=2; position<=material.fragments.length; position++)
+        state = model.reducer(state, {type:"MATERIAL_POSITION",storyId:id,id:material.id,position});
+    }
     if (step.kind === "map") {
       for (const question of story.questions)
         state = model.reducer(state, { type: "MAP_ANSWER", storyId: id, id: question.id, value: question.correct });

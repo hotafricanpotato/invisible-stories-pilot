@@ -355,7 +355,7 @@ test("existing v1 session migrates in the browser without replaying visited scen
   const saved = await page.evaluate(() =>
     JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")),
   );
-  expect(saved.version).toBe(5);
+  expect(saved.version).toBe(6);
   expect(saved.quiz).toEqual(legacy.quiz);
   expect(saved.stories.nikita.answers).toEqual(legacy.nikita.answers);
   expect(saved.stories.nikita.currentStepId).toBe("football");

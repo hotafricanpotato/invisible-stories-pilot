@@ -34,14 +34,14 @@ test("three cards, sequential status, real completion and pilot statistics", () 
   assert.deepEqual(s.quiz.answers,{});
 });
 test("full configuration fails closed without Ilya and opens after all three real modules complete",()=>{
-  const fullOptions={...exhibitionConfig,mode:"full"};
+  const fullOptions={...exhibitionConfig,mode:"full",availableStoryIds:["liza","nikita","ilya"]};
   const full=createExhibitionModel(storyRegistry,fullOptions);
   let s=finish(finish(model.initialState(),"liza"),"nikita");
   assert.equal(full.canEnterStats(s),false);
   assert.equal(full.allowedPath("/statistics/1",s),"/stories");
   // Only test data reuse; no Ilya script or image is shipped.
   const third=defineStory({...structuredClone(storyRegistry.nikita),id:"ilya"});
-  const registry=createStoryRegistry([...Object.values(storyRegistry),third]);
+  const registry=createStoryRegistry([storyRegistry.liza,storyRegistry.nikita,third]);
   const m=createExhibitionModel(registry,fullOptions);
   s=m.restore(JSON.stringify(s));
   assert.equal(m.storyStatus(s,"ilya"),"Доступна");

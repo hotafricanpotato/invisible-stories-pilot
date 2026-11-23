@@ -183,7 +183,7 @@ test("v1 migration retains completed pilot, quiz, materials, map and statistics"
     revealed: true,
   };
   const b = restore(JSON.stringify(legacy));
-  assert.equal(b.version, 5);
+  assert.equal(b.version, 6);
   assert.deepEqual(b.quiz, legacy.quiz);
   assert.equal(b.stories.nikita.completed, true);
   assert.deepEqual(b.stories.nikita.opened, legacy.nikita.opened);

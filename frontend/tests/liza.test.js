@@ -105,7 +105,7 @@ test("old v1/v2/v3 Nikita sessions keep partial progress, materials, map, stats 
     }
     if(version===1) { input.nikita=input.stories.nikita;delete input.stories; }
     const restored=model.restore(JSON.stringify(input));
-    assert.equal(restored.version,5);
+    assert.equal(restored.version,6);
     assert.equal(restored.cursor,"/stories");
     assert.equal(restored.stories.nikita.unlocked,done?6:2);
     assert.deepEqual(restored.stories.nikita.opened,done?complete.stories.nikita.opened:[]);
@@ -116,13 +116,14 @@ test("old v1/v2/v3 Nikita sessions keep partial progress, materials, map, stats 
     assert.deepEqual(model.restore(JSON.stringify(restored)),restored);
   }
 });
-test("sequential future configuration requires Liza first without registering Ilya", () => {
+test("sequential access requires Liza first; Ilya is stored but disabled in the standard pilot", () => {
   const sequential=createExhibitionModel(storyRegistry,{storyAccess:"sequential"});
   let s=quizDone(sequential);
   assert.equal(sequential.allowedPath("/stories/nikita/sunday",s),"/stories");
   s=finish(s,"liza",sequential);
   assert.equal(sequential.allowedPath("/stories/nikita/sunday",s),"/stories/nikita/sunday");
-  assert.deepEqual(Object.keys(storyRegistry),["liza","nikita"]);
+  assert.deepEqual(Object.keys(storyRegistry),["liza","nikita","ilya"]);
+  assert.deepEqual(exhibitionConfig.availableStoryIds,["liza","nikita"]);
   assert.equal(exhibitionConfig.finalQuizEnabled,false);
 });
 

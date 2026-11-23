@@ -1,3 +1,5 @@
+import ilya from "./ilya.json" with { type: "json" };
+import ilyaPresentation from "./ilyaPresentation.js";
 import { exhibitionConfig } from "./exhibitionConfig.js";
 import liza from "./liza.json" with { type: "json" };
 import lizaPresentation from "./lizaPresentation.js";
@@ -137,14 +139,10 @@ export function createStoryRegistry(stories) {
 const approvedDefinitions = createStoryRegistry([
   defineStory(liza, lizaPresentation),
   defineStory(nikita, nikitaPresentation),
+  defineStory(ilya, ilyaPresentation),
 ]);
-export const storyRegistry = createStoryRegistry(
-  exhibitionConfig.availableStoryIds.map((id) => {
-    if (!Object.hasOwn(approvedDefinitions, id))
-      throw new Error(`Approved scenario is not registered: ${id}`);
-    return approvedDefinitions[id];
-  }),
-);
+// Keep all approved modules in storage, even while local preview access is disabled.
+export const storyRegistry = approvedDefinitions;
 
 // Source indices stay stable for migration; adjacent chat messages form one UI step.
 export function fragmentRange(scene, position, mode) {

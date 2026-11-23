@@ -54,6 +54,7 @@ export default function StoryPage() {
           story={story}
           progress={p}
           onToggle={(id) => send("MATERIAL", { id })}
+          onPosition={(id, position) => send("MATERIAL_POSITION", { id, position })}
         />
       )}
       {step.kind === "map" && (
@@ -70,7 +71,7 @@ export default function StoryPage() {
             {story.presentation.conclusionLabel ?? end.title}
           </div>
           <h1>{end.title}</h1>
-          <p className="lead">{end.introduction}</p>
+          {end.introduction && <p className="lead">{end.introduction}</p>}
           {end.factors && (
             <div className="factor-grid">
               {end.factors.map((f, i) => (

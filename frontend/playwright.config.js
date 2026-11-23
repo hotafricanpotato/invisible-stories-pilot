@@ -1,6 +1,8 @@
 import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/e2e",
+  outputDir: "test-results/pilot",
+  testIgnore: "**/ilya.spec.js",
   timeout: 60000,
   fullyParallel: false,
   workers: 1,

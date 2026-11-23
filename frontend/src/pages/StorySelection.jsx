@@ -21,9 +21,11 @@ export default function StorySelection() {
         <p role="status">{message}</p>
         <button type="button" aria-label="Скрыть уведомление" onClick={() => nav("/stories", { replace: true, state: null })}>×</button>
       </div>}
+      {exhibitionConfig.mode === "pilot" && exhibitionConfig.availableStoryIds.includes("ilya") &&
+        <p className="caption">Локальное тестирование истории Ильи. Условия доступа к статистике пилота не изменены.</p>}
       <div className="archive-story-grid">
         {entries.map((entry, index) => <StoryCard key={entry.id} entry={entry} number={index + 1}
-          story={storyRegistry[entry.id]} status={storyStatus(state, entry.id)}
+          story={exhibitionConfig.availableStoryIds.includes(entry.id) ? storyRegistry[entry.id] : undefined} status={storyStatus(state, entry.id)}
           onOpen={() => nav(resumePath(state, entry.id))} />)}
       </div>
       <div className="selection-statistics">

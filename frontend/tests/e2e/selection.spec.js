@@ -63,7 +63,7 @@ test("v4 partial progress and current reply survive new locks, then resume after
   await page.goto("http://pilot.test/stories/nikita/keys");
   await expect(page).toHaveURL(/\/stories$/);
   const migrated=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")));
-  expect(migrated.version).toBe(5);
+  expect(migrated.version).toBe(6);
   expect(migrated.stories.nikita).toEqual(saved.stories.nikita);
   expect(migrated.quiz).toEqual(saved.quiz);
   const unlocked=finishStory(migrated,"liza",model,storyRegistry);

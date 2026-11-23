@@ -1,7 +1,7 @@
 // Add only approved story modules here. No placeholder narratives or final questions.
 export const exhibitionConfig = {
   mode: "pilot",
-  availableStoryIds: ["liza", "nikita"],
+  availableStoryIds: ["liza", "nikita", ...(import.meta.env?.VITE_ENABLE_ILYA_PREVIEW === "1" ? ["ilya"] : [])],
   storyOrder: ["liza", "nikita", "ilya"],
   storyAccess: "sequential",
   statisticsRequiredStoryIds: {

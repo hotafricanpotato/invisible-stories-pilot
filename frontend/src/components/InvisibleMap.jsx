@@ -13,7 +13,7 @@ export default function InvisibleMap({ story, progress, onAnswer, onReveal }) {
         <section className="map-question" key={q.id}>
           <h2>{q.title}</h2>
           <blockquote>«{q.fragment}»</blockquote>
-          <p>Как можно интерпретировать этот эпизод?</p>
+          <p>{q.question ?? "Как можно интерпретировать этот эпизод?"}</p>
           {progress.revealed ? (
             <>
               <div className="answer-box">

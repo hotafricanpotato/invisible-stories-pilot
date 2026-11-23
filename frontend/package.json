@@ -12,7 +12,10 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "node --test tests/*.test.js",
     "test:content": "python3 tests/verify_content.py",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "dev:ilya": "node scripts/ilya-preview.mjs",
+    "build:ilya": "node scripts/ilya-preview.mjs build",
+    "test:e2e:ilya": "playwright test --config playwright.ilya.config.js"
   },
   "dependencies": {
     "react": "^19.0.0",
