@@ -1,7 +1,7 @@
 import { expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { test, goNext, noOverflow, assertText, revealAll, openSelection } from "./support.js";
+import { test, goNext, noOverflow, assertText, revealAll, openSelection, completeStoryInBrowser } from "./support.js";
 import { reducer, restore } from "../../src/state/model.js";
 import { storyRegistry, sceneFragments } from "../../src/content/storyRegistry.js";
 const artifacts = process.env.ARTIFACT_DIR || path.resolve("../../work");
@@ -28,7 +28,7 @@ async function completeLizaForNikitaRegression(page) {
   await page.evaluate(s=>sessionStorage.setItem("invisible-stories:pilot:v1",JSON.stringify(s)),s);
   await page.reload();
 }
-test("complete production pilot, exact content, gates, reload, reset and no answer transmission", async ({
+test("complete production exhibition, exact content, gates, reload, reset and no answer transmission", async ({
   page,
 }, info) => {
   const errors = [];
@@ -157,47 +157,21 @@ test("complete production pilot, exact content, gates, reload, reset and no answ
     await assertText(page, end[k]);
   await page.getByRole("button", { name: "К выбору историй →" }).click();
   await expect(page).toHaveURL(/\/stories$/);
-  await expect(page.getByRole("status")).toContainText("Теперь доступен раздел");
+  await expect(page.getByRole("status")).toContainText("Теперь доступна история Ильи");
+  await expect(page.getByRole("button",{name:"Перейти к „Невидимой статистике“"})).toBeDisabled();
+  await completeStoryInBrowser(page, storyRegistry.ilya);
+  await expect(page.getByRole("status")).toHaveText("Все три истории завершены. Теперь доступна „Невидимая статистика“");
   await expect(page.locator('[aria-labelledby="card-nikita"] .archive-card-status')).toHaveText("Пройдена");
   await page.getByRole("button", {name:"Перейти к „Невидимой статистике“"}).click();
-  await page.goto("http://pilot.test/statistics/4");
-  await expect(page).toHaveURL(/statistics\/1$/);
-  await expect(page.locator(".story-shell")).toHaveCount(0);
-  for (const line of stats.russia.slice(0, 4))
-    await assertText(page, line.text);
-  for (const [name, val] of stats.values) {
-    await expect(
-      page.locator(".stat-bar").filter({ hasText: name }),
-    ).toContainText(String(val).replace(".", ",") + "%");
-  }
-  await page
-    .getByRole("radio", { name: "Только нефизические", exact: true })
-    .check();
-  await expect(page.locator(".stat-bar")).toHaveCount(2);
-  await page.reload();
-  await expect(
-    page.getByRole("radio", { name: "Только нефизические", exact: true }),
-  ).toBeChecked();
-  await goNext(page);
-  for (let i = 0; i < 2; i++) {
-    await page.locator(".document").nth(i).getByRole("button").click();
-    await assertText(page, stats.data[i][4]);
-  }
-  await assertText(page, stats.world[3].text);
+  await expect(page).toHaveURL(/\/statistics\/1$/);
+  await expect(page.locator('.recognition-bar')).toHaveCount(4);
+  for (const [name,val] of stats.values) await expect(page.locator('.recognition-bar').filter({hasText:name})).toContainText(String(val).replace('.',',')+'%');
+  await expect(page.getByRole('link',{name:/РНФ/})).toHaveAttribute('href',stats.sources.russia);
+  await page.getByRole('button',{name:'Далее',exact:true}).click();
+  await expect(page.getByRole('link',{name:/UNICEF, 11 июня/})).toHaveAttribute('href',stats.sources.global);
+  await page.getByRole('button',{name:'Далее',exact:true}).click();
   await noOverflow(page);
-  await goNext(page);
-  await expect(
-    page.getByRole("button", { name: "Раскрыть объяснение" }),
-  ).toBeDisabled();
-  await page.getByRole("radio").nth(1).check();
-  await page.getByRole("button", { name: "Раскрыть объяснение" }).click();
-  await assertText(page, stats.limits[4].text);
-  await goNext(page);
-  for (const [label, text] of stats.connections) {
-    await page.getByRole("button", { name: label }).click();
-    await assertText(page, text);
-  }
-  await page.getByRole("button", { name: "Завершить пилот →" }).click();
+  await page.getByRole("button", { name: "Завершить просмотр" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Спасибо за участие",
   );

@@ -12,7 +12,8 @@ const indices = (a, b) => Array.from({length: b-a+1}, (_, i) => a+i);
 const messageLine = m => `${m.sender}${m.time ? `, ${m.time}` : ""}: ${m.text}`;
 const transcript = scene => sceneFragments(scene).flatMap(part => part.kind === "chat" ? part.messages.map(messageLine)
   : part.kind === "message" ? [messageLine(part.message)] : part.text.split("\n\n"));
-const model = createExhibitionModel(storyRegistry, exhibitionConfig);
+// Keep the historical two-story pilot regression explicit; full-route tests cover current defaults.
+const model = createExhibitionModel(storyRegistry, {...exhibitionConfig,mode:"pilot",availableStoryIds:["liza","nikita"]});
 function quizDone(m = model) {
   let s = m.initialState();
   for (let i=0;i<5;i++) s=m.reducer(s,{type:"QUIZ_ANSWER",id:i,value:"A"});
@@ -116,14 +117,14 @@ test("old v1/v2/v3 Nikita sessions keep partial progress, materials, map, stats 
     assert.deepEqual(model.restore(JSON.stringify(restored)),restored);
   }
 });
-test("sequential access requires Liza first; Ilya is stored but disabled in the standard pilot", () => {
+test("sequential access requires Liza first; all three stories are now enabled", () => {
   const sequential=createExhibitionModel(storyRegistry,{storyAccess:"sequential"});
   let s=quizDone(sequential);
   assert.equal(sequential.allowedPath("/stories/nikita/sunday",s),"/stories");
   s=finish(s,"liza",sequential);
   assert.equal(sequential.allowedPath("/stories/nikita/sunday",s),"/stories/nikita/sunday");
   assert.deepEqual(Object.keys(storyRegistry),["liza","nikita","ilya"]);
-  assert.deepEqual(exhibitionConfig.availableStoryIds,["liza","nikita"]);
+  assert.deepEqual(exhibitionConfig.availableStoryIds,["liza","nikita","ilya"]);
   assert.equal(exhibitionConfig.finalQuizEnabled,false);
 });
 

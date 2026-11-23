@@ -1,11 +1,11 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useExhibition } from "../state/Provider";
 import {
   Navigation,
   Note,
   Progress,
 } from "../components/UI";
-import Statistics from "./Statistics";
+import StatisticsExhibition from "./StatisticsExhibition";
 export function Home() {
   const { state } = useExhibition();
   const nav = useNavigate();
@@ -38,7 +38,7 @@ export function Home() {
               : "Продолжить выставку →"}
           </button>
           <p className="caption">
-            Две истории. Несколько точек зрения.
+            Три истории. Несколько точек зрения.
             <br />
             То, что легко не заметить.
           </p>
@@ -64,7 +64,7 @@ export function Home() {
           {[
             [
               "01 / УСЛЫШАТЬ",
-              "Истории Лизы и Никиты",
+              "Истории Лизы, Никиты и Ильи",
               "Познакомьтесь с героями и взгляните на их повседневную жизнь.",
             ],
             [
@@ -88,10 +88,9 @@ export function Home() {
       </section>
       <Note>
         <p>
-          Пилотная версия: сейчас доступны истории Лизы и Никиты и общий
-          раздел статистики. История Ильи и итоговое тестирование ещё
-          разрабатываются. Тема может быть эмоционально непростой — прохождение
-          можно прекратить в любой момент.
+          Истории открываются последовательно: Лиза, Никита, Илья. После
+          завершения всех трёх откроется «Невидимая статистика». Тема может
+          быть эмоционально непростой — прохождение можно прекратить в любой момент.
         </p>
       </Note>
       <p className="caption">
@@ -102,56 +101,22 @@ export function Home() {
   );
 }
 export function StatisticsPage() {
-  const { screenId } = useParams();
-  const i = Number(screenId) - 1;
-  const nav = useNavigate();
-  const { dispatch } = useExhibition();
-  return (
-    <>
-      <Progress
-        current={i + 1}
-        total={4}
-        label="Невидимая статистика · экран"
-      />
-      <Statistics index={i} />
-      <Navigation
-        back
-        next
-        onBack={() =>
-          nav(i ? `/statistics/${i}` : "/stories")
-        }
-        nextLabel={i === 3 ? "Завершить пилот →" : "Далее →"}
-        onNext={() => {
-          if (i === 3) {
-            dispatch({ type: "STATS_COMPLETE" });
-            nav("/complete");
-          } else {
-            dispatch({ type: "STATS_ADVANCE", index: i });
-            nav(`/statistics/${i + 2}`);
-          }
-        }}
-      />
-    </>
-  );
+  return <StatisticsExhibition />;
 }
 export function Completion() {
   const nav = useNavigate();
   return (
     <>
-      <div className="eyebrow">ИНФОРМАЦИЯ О ПИЛОТЕ</div>
+      <div className="eyebrow">ЗАВЕРШЕНИЕ ПРОСМОТРА</div>
       <div className="completion-mark" aria-hidden="true">
         ◌
       </div>
       <h1>Спасибо за участие</h1>
       <p className="lead">
-        Это тестовая версия цифровой выставки «Невидимые истории». Сейчас
-        доступны истории Лизы и Никиты и общий
-        раздел статистики.
+        Вы прошли истории Лизы, Никиты и Ильи и раздел «Невидимая статистика».
       </p>
       <p>
-        История Ильи, итоговое тестирование и эпилог появятся позже. Эта версия
-        предназначена для проверки понятности, восприятия и удобства, а не для
-        измерения изменения знаний.
+        Итоговый тест и эпилог пока не подключены.
       </p>
       <Note>
         <p>
@@ -163,7 +128,7 @@ export function Completion() {
       <Navigation
         back
         next
-        onBack={() => nav("/statistics/4")}
+        onBack={() => nav("/statistics/3")}
         onNext={() => nav("/")}
         nextLabel="Вернуться на главную →"
       />

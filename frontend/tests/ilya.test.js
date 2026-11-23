@@ -71,13 +71,13 @@ test("all seven approved WebP originals match manifest hashes and presentation d
   const css=await readFile(new URL('../src/story-design.css',import.meta.url),'utf8');
   for(const color of ['#e7e5d9','#f0f0e7','#65745b','#384437']) assert.ok(css.includes(color));
 });
-test("Ilya is test-only after Nikita; pilot statistics still opens after the first two",()=>{
-  assert.equal(exhibitionConfig.mode,'pilot');
+test("Ilya follows Nikita; full statistics requires all three completed stories",()=>{
+  assert.equal(exhibitionConfig.mode,'full');
   let s=model.initialState();
   assert.equal(model.allowedPath('/stories/ilya/introduction',s),'/stories');
   s=finish(s,'liza');assert.equal(model.canEnter(s,'ilya'),false);
-  s=finish(s,'nikita');assert.equal(model.canEnter(s,'ilya'),true);assert.equal(model.canEnterStats(s),true);
-  const standard=createExhibitionModel(storyRegistry,exhibitionConfig);
+  s=finish(s,'nikita');assert.equal(model.canEnter(s,'ilya'),true);assert.equal(model.canEnterStats(s),false);
+  const standard=createExhibitionModel(storyRegistry,{...exhibitionConfig,mode:"pilot",availableStoryIds:["liza","nikita"]});
   assert.equal(standard.canEnter(s,'ilya'),false);assert.equal(standard.canEnterStats(s),true);
   const full=createExhibitionModel(storyRegistry,{...options,mode:'full'});
   assert.equal(full.canEnterStats(s),false);
@@ -130,7 +130,7 @@ test("map requires all three answers; no scoring or loss on final completion",()
 });
 test("versions 1–5 migrate without changing old story progress, quiz or statistics",()=>{
   const oldRegistry=createStoryRegistry([storyRegistry.liza,storyRegistry.nikita]);
-  const old=createExhibitionModel(oldRegistry,exhibitionConfig);
+  const old=createExhibitionModel(oldRegistry,{...exhibitionConfig,mode:"pilot",availableStoryIds:["liza","nikita"]});
   let complete=finishStory(finishStory(old.initialState(),'liza',old,oldRegistry),'nikita',old,oldRegistry);
   complete=old.reducer(complete,{type:'STATS_ADVANCE',index:0});
   for(const version of [1,2,3,4,5]) {
@@ -148,7 +148,7 @@ test("versions 1–5 migrate without changing old story progress, quiz or statis
 test("disabling and re-enabling local preview never deletes Ilya progress",()=>{
   let s=reachMaterials();s=send(s,'MATERIAL',{id:'kirill-conversation'});
   s=send(s,'MATERIAL_POSITION',{id:'kirill-conversation',position:2});
-  const standard=createExhibitionModel(storyRegistry,exhibitionConfig);
+  const standard=createExhibitionModel(storyRegistry,{...exhibitionConfig,mode:"pilot",availableStoryIds:["liza","nikita"]});
   const hidden=standard.restore(JSON.stringify(s));
   assert.deepEqual(hidden.stories.ilya,s.stories.ilya);
   assert.equal(standard.allowedPath('/stories/ilya/materials',hidden),'/stories');

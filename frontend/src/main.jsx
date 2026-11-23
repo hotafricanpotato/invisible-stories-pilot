@@ -21,6 +21,7 @@ import StorySelection from "./pages/StorySelection";
 import "./styles/story-selection.css";
 import StoryPage from "./pages/StoryPage";
 import "./styles.css";
+import "./styles/statistics-exhibition.css";
 function App() {
   const { state, dispatch, storageAvailable } = useExhibition();
   const location = useLocation();
@@ -35,7 +36,7 @@ function App() {
   const activeStory = storyRoute && Object.hasOwn(storyRegistry, storyRoute[1])
     ? storyRegistry[storyRoute[1]] : null;
   const activeStep = activeStory?.steps.find(step => step.id === storyRoute[2]);
-  // Story conclusions share the story theme; statistics remain a separate dark exhibition.
+  // Story themes remain isolated; the statistics exhibition has its own warm surface.
   const storyTheme = path === location.pathname && activeStep
     ? activeStory.presentation.theme ?? activeStory.id : undefined;
   useEffect(() => {
@@ -43,7 +44,7 @@ function App() {
     if (location.pathname !== "/")
       dispatch({ type: "CURSOR", path: location.pathname });
     window.scrollTo(0, 0);
-    main.current?.focus();
+    main.current?.focus(location.pathname.startsWith("/statistics/") ? {preventScroll:true} : undefined);
   }, [location.pathname, path, dispatch]);
   useEffect(() => {
     if (resetPending && location.pathname === "/") {
@@ -55,7 +56,7 @@ function App() {
     if (resetOpen) cancel.current?.focus();
   }, [resetOpen]);
   return (
-    <div className={storyTheme ? "app-shell story-shell" : location.pathname === "/stories" ? "app-shell selection-shell" : "app-shell"} data-story-theme={storyTheme}>
+    <div className={storyTheme ? "app-shell story-shell" : location.pathname === "/stories" ? "app-shell selection-shell" : location.pathname.startsWith("/statistics") ? "app-shell statistics-shell" : "app-shell"} data-story-theme={storyTheme}>
       <a className="skip-link" href="#main">
         К содержанию
       </a>
@@ -69,7 +70,7 @@ function App() {
           </span>
         </Link>
         <span className="edition">
-          ЦИФРОВАЯ ВЫСТАВКА <span>/</span> ПИЛОТ 2026
+          ЦИФРОВАЯ ВЫСТАВКА <span>/</span> 2026
         </span>
         <button
           className="restart"
@@ -117,7 +118,7 @@ function App() {
         id="main"
         ref={main}
         tabIndex="-1"
-        className={storyTheme ? "story-main" : location.pathname === "/stories" ? "selection-main" : location.pathname === "/" ? "home-main" : "page-main"}
+        className={storyTheme ? "story-main" : location.pathname === "/stories" ? "selection-main" : location.pathname.startsWith("/statistics") ? "statistics-main" : location.pathname === "/" ? "home-main" : "page-main"}
       >
         {!storageAvailable && (
           <p role="status" className="note">
@@ -139,8 +140,8 @@ function App() {
         )}
       </main>
       <footer>
-        <span>Пилотная версия · Художественные реконструкции</span>
-        <span>Истории Лизы и Никиты · 2026</span>
+        <span>Художественные реконструкции</span>
+        <span>Истории Лизы, Никиты и Ильи · 2026</span>
       </footer>
     </div>
   );

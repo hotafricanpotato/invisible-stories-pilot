@@ -53,13 +53,13 @@ async function reachMaterials(page) {
   await page.goto('http://pilot.test/stories/ilya/introduction');
   for(const scene of ilya.scenes) {await readScene(page,scene);await goNext(page);}
 }
-test('Ilya full exact route, free material order, saved dialogue positions, B/C/A, closing and pilot statistics',async({page},info)=>{
+test('Ilya full exact route, free material order, saved dialogue positions, B/C/A, closing and full statistics',async({page},info)=>{
   const errors=[],requests=[];
   page.on('pageerror',e=>errors.push(e.message));
   page.on('request',r=>requests.push({url:r.url(),method:r.method(),body:r.postData()}));
   const before=await prepare(page);
   await expect(page.locator('[aria-labelledby="card-ilya"] .archive-card-status')).toHaveText('Доступна');
-  await expect(page.getByRole('button',{name:'Перейти к „Невидимой статистике“'})).toBeEnabled();
+  await expect(page.getByRole('button',{name:'Перейти к „Невидимой статистике“'})).toBeDisabled();
   await page.locator('[aria-labelledby="card-ilya"] button').click();
   await expect(page.locator('.story-shell')).toHaveCSS('background-color','rgb(231, 229, 217)');
   await expect(page.locator('.artwork-placeholder')).toHaveCount(0);
@@ -127,6 +127,7 @@ test('Ilya full exact route, free material order, saved dialogue positions, B/C/
   await page.screenshot({path:`${artifacts}/ilya-closing-${info.project.name}.png`,fullPage:true});
   await page.getByRole('button',{name:'К выбору историй →'}).click();
   await expect(page).toHaveURL(/\/stories$/);
+  await expect(page.getByRole('status')).toHaveText('Все три истории завершены. Теперь доступна „Невидимая статистика“');
   await expect(page.locator('[aria-labelledby="card-ilya"] .archive-card-status')).toHaveText('Пройдена');
   const saved=await readState(page);
   expect(saved.stories.ilya.completed).toBe(true);
@@ -135,7 +136,7 @@ test('Ilya full exact route, free material order, saved dialogue positions, B/C/
   await page.locator('[aria-labelledby="card-ilya"] button').click();await expect(page).toHaveURL(/\/final-text$/);
   await page.goto('http://pilot.test/stories');
   await page.getByRole('button',{name:'Перейти к „Невидимой статистике“'}).click();
-  await expect(page).toHaveURL(/statistics\/1$/);await expect(page.locator('.story-shell')).toHaveCount(0);
+  await expect(page).toHaveURL(/\/statistics\/1$/);await expect(page.locator('.story-shell')).toHaveCount(0);
   expect(errors).toEqual([]);
   expect(requests.filter(r=>new URL(r.url).origin!=='http://pilot.test'||r.method!=='GET'||r.body)).toEqual([]);
 });

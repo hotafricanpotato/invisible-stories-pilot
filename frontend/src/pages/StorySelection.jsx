@@ -21,8 +21,6 @@ export default function StorySelection() {
         <p role="status">{message}</p>
         <button type="button" aria-label="Скрыть уведомление" onClick={() => nav("/stories", { replace: true, state: null })}>×</button>
       </div>}
-      {exhibitionConfig.mode === "pilot" && exhibitionConfig.availableStoryIds.includes("ilya") &&
-        <p className="caption">Локальное тестирование истории Ильи. Условия доступа к статистике пилота не изменены.</p>}
       <div className="archive-story-grid">
         {entries.map((entry, index) => <StoryCard key={entry.id} entry={entry} number={index + 1}
           story={exhibitionConfig.availableStoryIds.includes(entry.id) ? storyRegistry[entry.id] : undefined} status={storyStatus(state, entry.id)}
@@ -30,10 +28,8 @@ export default function StorySelection() {
       </div>
       <div className="selection-statistics">
         <button type="button" className="primary" disabled={!statsAvailable} aria-describedby="statistics-condition"
-          onClick={() => nav(`/statistics/${state.stats.unlocked + 1}`)}>Перейти к „Невидимой статистике“</button>
-        <p id="statistics-condition">{exhibitionConfig.mode === "pilot"
-          ? "В полной версии „Невидимая статистика“ откроется после трёх историй. В тестовой версии раздел доступен после прохождения Лизы и Никиты"
-          : "„Невидимая статистика“ откроется после прохождения всех трёх историй"}</p>
+          onClick={() => nav("/statistics")}>Перейти к „Невидимой статистике“</button>
+        <p id="statistics-condition">„Невидимая статистика“ откроется после прохождения всех трёх историй</p>
       </div>
       <button type="button" className="selection-back" onClick={() => nav("/")}>← На главную</button>
     </section>

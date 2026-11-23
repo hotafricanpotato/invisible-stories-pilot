@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test, openSelection, goNext, assertText, noOverflow, revealAll } from "./support.js";
+import { test, openSelection, goNext, assertText, noOverflow, revealAll, completeStoryInBrowser } from "./support.js";
 import { storyRegistry, sceneFragments } from "../../src/content/storyRegistry.js";
 import path from "node:path";
 import { reducer } from "../../src/state/model.js";
@@ -146,11 +146,16 @@ test("Liza full approved scenario, independent progress, album, gates and exact 
   await page.getByRole("button",{name:"К заключению →"}).click();
   await page.getByRole("button",{name:"К выбору историй →"}).click();
   await expect(page).toHaveURL(/\/stories$/);
-  await expect(page.getByRole("status")).toContainText("Теперь доступен раздел");
+  await expect(page.getByRole("status")).toContainText("Теперь доступна история Ильи");
+  await expect(page.getByRole("button",{name:"Перейти к „Невидимой статистике“"})).toBeDisabled();
+  await completeStoryInBrowser(page,storyRegistry.ilya);
+  await expect(page.getByRole("status")).toHaveText("Все три истории завершены. Теперь доступна „Невидимая статистика“");
+  for(const id of ['liza','nikita','ilya']) await expect(page.locator(`[aria-labelledby="card-${id}"] .archive-card-status`)).toHaveText("Пройдена");
   await page.getByRole("button",{name:"Перейти к „Невидимой статистике“"}).click();
-  await expect(page).toHaveURL(/statistics\/1$/);
-  await goNext(page);await goNext(page);await goNext(page);
-  await page.getByRole("button",{name:"Завершить пилот →"}).click();
+  await expect(page).toHaveURL(/\/statistics\/1$/);
+  await page.getByRole("button",{name:"Далее",exact:true}).click();
+  await page.getByRole("button",{name:"Далее",exact:true}).click();
+  await page.getByRole("button",{name:"Завершить просмотр"}).click();
   await expect(page).toHaveURL(/\/complete$/);
   expect(errors).toEqual([]);
   expect(requests.filter(r=>new URL(r.url).origin!=="http://pilot.test"||r.method!=="GET"||r.body)).toEqual([]);

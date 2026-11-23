@@ -1,11 +1,12 @@
 export default function StoryCard({ entry, number, story, status, onOpen }) {
+  const cover = story?.presentation.selection?.cover ?? story?.presentation.artwork?.introduction?.src;
   const locked = status === "Недоступна";
   const label = status === "Пройдена" ? "Посмотреть снова" : status === "В процессе" ? "Продолжить" : "Начать историю";
   return (
     <article className="archive-story-card" data-story-theme={entry.theme} aria-labelledby={`card-${entry.id}`}>
       <div className="archive-card-art">
-        {story?.presentation.selection?.cover ? <img src={story.presentation.selection.cover}
-          alt={story.presentation.selection.alt} /> : <div className="archive-card-pending" aria-hidden="true">03 / АРХИВ<br />В ПОДГОТОВКЕ</div>}
+        {cover ? <img src={cover}
+          alt={story.presentation.selection.alt ?? story.presentation.artwork?.introduction?.label} /> : <div className="archive-card-pending" aria-hidden="true">03 / АРХИВ<br />В ПОДГОТОВКЕ</div>}
       </div>
       <div className="archive-card-body">
         <p className="eyebrow">ИСТОРИЯ {String(number).padStart(2, "0")}</p>

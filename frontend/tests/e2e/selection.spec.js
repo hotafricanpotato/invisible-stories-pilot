@@ -14,10 +14,11 @@ test("selection palettes, breakpoints, resume and reset never return to the entr
   await expect(page.locator(".archive-story-card")).toHaveCount(3);
   for(const [id,color] of [["liza","rgb(238, 230, 232)"],["nikita","rgb(233, 217, 199)"],["ilya","rgb(231, 229, 217)"]])
     await expect(card(page,id)).toHaveCSS("background-color",color);
-  await expect(card(page,"ilya")).toContainText("История в разработке");
+  await expect(card(page,"ilya")).not.toContainText("История в разработке");
+  await expect(card(page,"ilya").locator("img")).toHaveJSProperty("naturalWidth",1672);
   await expect(card(page,"nikita").getByRole("button")).toBeDisabled();
   await expect(statsButton(page)).toBeVisible();await expect(statsButton(page)).toBeDisabled();
-  await expect(page.locator("#statistics-condition")).toHaveText("В полной версии „Невидимая статистика“ откроется после трёх историй. В тестовой версии раздел доступен после прохождения Лизы и Никиты");
+  await expect(page.locator("#statistics-condition")).toHaveText("„Невидимая статистика“ откроется после прохождения всех трёх историй");
   for(const width of [320,375,760,768,1200,1920]) {
     await page.setViewportSize({width,height:900});await noOverflow(page);
     const boxes=await Promise.all(["liza","nikita","ilya"].map(id=>card(page,id).boundingBox()));

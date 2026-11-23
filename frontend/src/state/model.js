@@ -70,6 +70,8 @@ export function createExhibitionModel(registry, options = {}) {
   };
   const completionMessage = (s, id) => {
     if (!s.stories[id]?.completed) return null;
+    if (options.mode === "full" && allStoriesComplete(s))
+      return "Все три истории завершены. Теперь доступна „Невидимая статистика“";
     const nextId = order[order.indexOf(id) + 1];
     if (nextId && canEnter(s, nextId))
       return `История ${registry[id].presentation.materialsCharacterName ?? registry[id].character} завершена. Теперь доступна история ${registry[nextId].presentation.materialsCharacterName ?? registry[nextId].character}`;
@@ -125,6 +127,9 @@ export function createExhibitionModel(registry, options = {}) {
       return Object.keys(s.quiz.answers).length === 5
         ? { ...s, quiz: { ...s.quiz, completed: true } }
         : s;
+    if (a.type === "STATS_VISIT")
+      return canEnterStats(s) && [1,2,3].includes(a.page)
+        ? { ...s, stats: { ...s.stats, currentPage: a.page } } : s;
     if (a.type === "STATS_PATCH")
       return { ...s, stats: { ...s.stats, ...a.value } };
     if (a.type === "STATS_ADVANCE")
@@ -134,8 +139,8 @@ export function createExhibitionModel(registry, options = {}) {
         ? { ...s, stats: { ...s.stats, unlocked: a.index + 1 } }
         : s;
     if (a.type === "STATS_COMPLETE")
-      return canEnterStats(s) && s.stats.unlocked === 3
-        ? { ...s, stats: { ...s.stats, completed: true } }
+      return canEnterStats(s)
+        ? { ...s, stats: { ...s.stats, unlocked: 3, completed: true } }
         : s;
     if (!Object.hasOwn(registry, a.storyId)) return s;
     const story = registry[a.storyId];
@@ -247,14 +252,11 @@ export function createExhibitionModel(registry, options = {}) {
         : storyPath(s.stories[id].unlocked, id);
     }
     if (match) return "/stories";
-    if ((path.startsWith("/statistics/") || path === "/complete") && !canEnterStats(s)) return "/stories";
-    const stat = path.match(/^\/statistics\/([1-4])$/);
-    if (stat)
-      return Number(stat[1]) - 1 <= s.stats.unlocked
-        ? path
-        : `/statistics/${s.stats.unlocked + 1}`;
-    if (path === "/complete")
-      return s.stats.completed ? path : `/statistics/${s.stats.unlocked + 1}`;
+    if ((path === "/statistics" || path.startsWith("/statistics/") || path === "/complete") && !canEnterStats(s)) return "/stories";
+    if (/^\/statistics\/[1-3]$/.test(path)) return path;
+    if (path === "/statistics/4") return "/statistics/3";
+    if (path === "/statistics") return "/statistics/1";
+    if (path === "/complete") return s.stats.completed ? path : "/statistics/1";
     return "/";
   }
   function restore(raw) {
@@ -351,6 +353,7 @@ export function createExhibitionModel(registry, options = {}) {
       b.stats.completed =
         stats.completed === true &&
         b.stats.unlocked === 3;
+      if ([1,2,3].includes(stats.currentPage)) b.stats.currentPage = stats.currentPage;
       b.stats.filter =
         stats.filter === "Только нефизические"
           ? "Только нефизические"

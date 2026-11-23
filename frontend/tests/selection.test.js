@@ -7,7 +7,7 @@ import { storyCatalog } from "../src/content/storyCatalog.js";
 import { finishStory } from "./story-helpers.js";
 const model = createExhibitionModel(storyRegistry, exhibitionConfig);
 const finish = (s, id) => finishStory(s, id, model, storyRegistry);
-test("three cards, sequential status, real completion and pilot statistics", () => {
+test("three cards, sequential status, real completion and full statistics", () => {
   assert.deepEqual(storyCatalog.map(e => e.id), ["liza", "nikita", "ilya"]);
   let s = model.initialState();
   assert.equal(model.storyStatus(s, "liza"), "Доступна");
@@ -27,9 +27,13 @@ test("three cards, sequential status, real completion and pilot statistics", () 
   assert.equal(model.completionMessage(s,"liza"),"История Лизы завершена. Теперь доступна история Никиты");
   assert.equal(model.canEnterStats(s),false);
   s = finish(s,"nikita");
+  assert.equal(model.canEnterStats(s),false);
+  assert.equal(model.completionMessage(s,"nikita"),"История Никиты завершена. Теперь доступна история Ильи");
+  assert.equal(model.storyStatus(s,"ilya"),"Доступна");
+  s=finish(s,"ilya");
   assert.equal(model.canEnterStats(s),true);
-  assert.equal(model.completionMessage(s,"nikita"),"История Никиты завершена. Теперь доступен раздел «Невидимая статистика»");
-  assert.equal(model.storyStatus(s,"ilya"),"Недоступна");
+  assert.equal(model.completionMessage(s,"ilya"),"Все три истории завершены. Теперь доступна „Невидимая статистика“");
+  for(const id of ['liza','nikita','ilya']) assert.equal(model.storyStatus(s,id),'Пройдена');
   assert.equal(s.quiz.completed,false);
   assert.deepEqual(s.quiz.answers,{});
 });
@@ -39,14 +43,11 @@ test("full configuration fails closed without Ilya and opens after all three rea
   let s=finish(finish(model.initialState(),"liza"),"nikita");
   assert.equal(full.canEnterStats(s),false);
   assert.equal(full.allowedPath("/statistics/1",s),"/stories");
-  // Only test data reuse; no Ilya script or image is shipped.
-  const third=defineStory({...structuredClone(storyRegistry.nikita),id:"ilya"});
-  const registry=createStoryRegistry([storyRegistry.liza,storyRegistry.nikita,third]);
-  const m=createExhibitionModel(registry,fullOptions);
-  s=m.restore(JSON.stringify(s));
-  assert.equal(m.storyStatus(s,"ilya"),"Доступна");
-  s=finishStory(s,"ilya",m,registry);
-  assert.equal(m.canEnterStats(s),true);
+  const missing=createExhibitionModel(createStoryRegistry([storyRegistry.liza,storyRegistry.nikita]),fullOptions);
+  assert.equal(missing.canEnterStats(s),false);
+  assert.equal(full.storyStatus(s,"ilya"),"Доступна");
+  s=finishStory(s,"ilya",full,storyRegistry);
+  assert.equal(full.canEnterStats(s),true);
 });
 test("v4 independent partial Nikita stays intact while locked, then resumes after Liza",()=>{
   const old=createExhibitionModel(createStoryRegistry([storyRegistry.nikita]));
@@ -80,7 +81,8 @@ test("legacy completed Nikita is revisitable but cannot bypass the new statistic
   assert.equal(model.storyStatus(restored,"nikita"),"Пройдена");
   assert.equal(model.allowedPath("/stories/nikita/conclusion",restored),"/stories/nikita/conclusion");
   assert.equal(model.canEnterStats(restored),false);
-  assert.equal(model.canEnterStats(finish(restored,"liza")),true);
+  assert.equal(model.canEnterStats(finish(restored,"liza")),false);
+  assert.equal(model.canEnterStats(finish(finish(restored,"liza"),"ilya")),true);
 });
 test("versions 1–4 retain quiz history without displaying or requiring it; reset starts at home",()=>{
   for(const version of [1,2,3,4]) {
@@ -97,5 +99,48 @@ test("versions 1–4 retain quiz history without displaying or requiring it; res
     assert.equal(model.storyStatus(s,"nikita"),"Недоступна");
     assert.equal(model.allowedPath("/quiz/1",s),"/stories");
     assert.equal(model.canEnterStats(s),false);
+  }
+});
+
+test("pilot migration keeps old statistics and all story data but rejects every access bypass",()=>{
+  const pilot=createExhibitionModel(storyRegistry,{...exhibitionConfig,mode:'pilot',availableStoryIds:['liza','nikita']});
+  let old=finishStory(finishStory(pilot.initialState(),'liza',pilot,storyRegistry),'nikita',pilot,storyRegistry);
+  for(let i=0;i<3;i++) old=pilot.reducer(old,{type:'STATS_ADVANCE',index:i});
+  old=pilot.reducer(old,{type:'STATS_COMPLETE'});
+  old.stats={...old.stats,filter:'Только нефизические',expanded:['global'],answer:1,revealed:true};
+  old.quiz={answers:{0:'B',1:'C',2:'C',3:'A',4:'C'},completed:true};
+  old.legacyStatsAccess=true;old.legacyStoryAccess=['nikita'];
+  for(const version of [1,2,3,4,5,6]) {
+    const input=structuredClone(old);input.version=version;input.cursor='/complete';
+    if(version===1) { input.nikita=input.stories.nikita;delete input.stories; }
+    let s=model.restore(JSON.stringify(input));
+    assert.deepEqual(s.stats,old.stats);assert.deepEqual(s.quiz,old.quiz);
+    assert.equal(s.cursor,'/stories');assert.equal(model.canEnterStats(s),false);
+    for(const url of ['/statistics/1','/statistics/4','/complete']) assert.equal(model.allowedPath(url,s),'/stories');
+    assert.equal(model.reducer(s,{type:'STATS_COMPLETE'}),s);
+    assert.equal(model.reducer(s,{type:'STATS_ADVANCE',index:0}),s);
+    if(version===1) s=finish(s,'liza');
+    s=finish(s,'ilya');
+    assert.equal(model.canEnterStats(s),true);
+    assert.equal(model.allowedPath('/statistics/4',s),'/statistics/3');
+    assert.deepEqual(s.stats,old.stats);
+    assert.equal(model.allowedPath('/complete',s),'/complete');
+  }
+});
+test("full completion, reset and repeat completion unlock statistics without quiz or legacy flags",()=>{
+  let s=model.initialState();
+  for(let round=0;round<2;round++) {
+    for(const id of ['liza','nikita','ilya']) {
+      assert.equal(model.canEnterStats(s),false);
+      s=finish(s,id);
+    }
+    assert.equal(model.canEnterStats(s),true);
+    assert.equal(model.completionMessage(s,'ilya'),'Все три истории завершены. Теперь доступна „Невидимая статистика“');
+    if(round===0) {
+      s=model.reducer(s,{type:'RESET'});assert.equal(s.cursor,'/');
+      assert.equal(model.storyStatus(s,'liza'),'Доступна');
+      for(const id of ['nikita','ilya']) assert.equal(model.storyStatus(s,id),'Недоступна');
+      assert.equal(model.allowedPath('/statistics/1',s),'/stories');
+    }
   }
 });

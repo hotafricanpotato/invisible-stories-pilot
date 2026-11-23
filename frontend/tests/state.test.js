@@ -154,9 +154,9 @@ test("map can change before reveal, locks after reveal and never contributes to 
 test("complete pilot, statistics, storage roundtrip and reset", () => {
   let s = finishStory(quizDone());
   assert.equal(s.stories.nikita.completed, true);
-  assert.equal(allowedPath("/statistics/4", s), "/statistics/1");
+  assert.equal(allowedPath("/statistics/4", s), "/statistics/3");
   for (let i = 0; i < 3; i++) s = apply(s, "STATS_ADVANCE", { index: i });
-  assert.equal(allowedPath("/complete", s), "/statistics/4");
+  assert.equal(allowedPath("/complete", s), "/statistics/1");
   s = apply(s, "STATS_COMPLETE");
   assert.equal(allowedPath("/complete", s), "/complete");
   assert.deepEqual(restore(JSON.stringify(s)), s);

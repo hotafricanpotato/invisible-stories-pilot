@@ -48,6 +48,7 @@ export async function assertText(page, text) {
     await expect(page.locator("main")).toContainText(p);
 }
 export async function revealAll(page) {
+  await expect(page.getByRole("status")).toHaveText(/Фрагмент \d+(?:–\d+)? из \d+/);
   let text = await page.locator("main").innerText();
   while (true) {
     const old = await page.getByRole("status").innerText();
@@ -62,4 +63,44 @@ export async function revealAll(page) {
 export async function openSelection(page) {
   await page.goto("http://pilot.test/stories");
   await expect(page.getByRole("heading", {level: 1})).toHaveText("Три истории. Три разных дома.");
+}
+
+// Walk a real story in the browser; no saved completion flags are injected.
+export async function completeStoryInBrowser(page, story) {
+  await page.locator(`[aria-labelledby="card-${story.id}"]`).getByRole('button').click();
+  for (const step of story.steps) {
+    await expect(page).toHaveURL(new RegExp(`/stories/${story.id}/${step.id}$`));
+    if (step.kind === 'scene') {
+      await revealAll(page);
+      await goNext(page);
+    } else if (step.kind === 'materials') {
+      await expect(page.locator('.material')).toHaveCount(3);
+      for (const [index, material] of story.materials.entries()) {
+        const section = page.locator('.material').nth(index);
+        const open = section.getByRole('button', {name:'Открыть материал ↓'});
+        if (await open.count()) await open.click();
+        if (material.type === 'dialogue') {
+          while (true) {
+            const current = await section.getByRole('status').innerText();
+            const [,position,total] = current.match(/Фрагмент (\d+) из (\d+)/);
+            if (Number(position) === Number(total)) break;
+            await section.getByRole('button', {name:'Далее →',exact:true}).click();
+            await expect(section.getByRole('status')).not.toHaveText(current);
+          }
+        }
+      }
+      await page.getByRole('button',{name:'К карте невидимого →'}).click();
+    } else if (step.kind === 'map') {
+      await expect(page.locator('.map-question')).toHaveCount(3);
+      const reveal=page.getByRole('button',{name:'Раскрыть связи'});
+      if(await reveal.count()) {
+        for(const question of await page.locator('.map-question').all()) await question.getByRole('radio').first().check();
+        await reveal.click();
+      }
+      await page.getByRole('button',{name:'К заключению →'}).click();
+    } else if (step === story.steps.at(-1)) {
+      await page.getByRole('button',{name:'К выбору историй →'}).click();
+    } else await goNext(page);
+  }
+  await expect(page).toHaveURL(/\/stories$/);
 }
