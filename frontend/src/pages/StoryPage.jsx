@@ -4,6 +4,7 @@ import { storyRegistry, sceneFragments, fragmentRange } from "../content/storyRe
 import { useExhibition } from "../state/Provider";
 import { storyPath, stepComplete } from "../state/model";
 import { Scene } from "../components/Story";
+import StoryClosing from "../components/story/StoryClosing";
 import SceneNavigation from "../components/story/SceneNavigation";
 import StoryMaterials from "../components/StoryMaterials";
 import InvisibleMap from "../components/InvisibleMap";
@@ -42,7 +43,7 @@ export default function StoryPage() {
     ? fragmentRange(step.scene, position, story.presentation.sceneModes?.[step.id]) : null;
   const total = step.kind === "scene" ? sceneFragments(step.scene).length : 0;
   return (
-    <div className="story-design">
+    <div className={`story-design${step.kind === "closing" ? " story-design--closing" : ""}`}>
       <div className="eyebrow">
         {story.presentation.archiveLabel ?? story.title}
       </div>
@@ -98,9 +99,8 @@ export default function StoryPage() {
           </div>}
         </>
       )}
-      {step.kind === "closing" && <section className="ending story-closing">
-        <h1>{step.content.title}</h1><Paragraphs text={step.content.text} />
-      </section>}
+      {step.kind === "closing" && <StoryClosing text={step.content.text}
+        label={story.presentation.closing?.label} endLabel={story.presentation.closing?.endLabel} />}
       {step.kind === "scene" ? <>
         <SceneNavigation start={range.start} end={range.end} total={total}
           onPrevious={() => range.start > 1 ? send("READ_POSITION", { sceneId: step.id, position: range.start - 1 }) : goBack()}
@@ -112,7 +112,7 @@ export default function StoryPage() {
         onBack={goBack} onNext={goForward}
         nextLabel={step.kind === "materials" ? "К карте невидимого →"
           : step.kind === "map" ? "К заключению →"
-          : last ? nextStoryLabel : "Далее →"} />}
+          : last ? (step.kind === "closing" && story.presentation.closing?.nextLabels?.[nextStoryId]) || nextStoryLabel : "Далее →"} />}
     </div>
   );
 }

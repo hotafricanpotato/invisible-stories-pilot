@@ -105,11 +105,23 @@ test("Liza full approved scenario, independent progress, album, gates and exact 
   await goNext(page);
   await expect(page).toHaveURL(/\/final-text$/);
   await assertText(page,liza.steps.at(-1).content.text);
+  await expect(page.getByRole("heading", {name:"Финальный текст", exact:true})).toHaveCount(0);
+  await expect(page.getByRole("heading", {name:"Послесловие", exact:true})).toBeVisible();
+  await expect(page.locator(".closing-lead")).toHaveText(liza.steps.at(-1).content.text.split("\n\n")[0]);
+  await expect(page.getByText("Конец истории Лизы",{exact:true})).toBeVisible();
+  for(const width of [360,390,430,1280,1920]) {
+    await page.setViewportSize({width,height:900});await noOverflow(page);
+    await expect(page.locator(".closing-card")).toBeVisible();
+    const sizes=await page.locator(".closing-card").evaluate(el=>({width:el.clientWidth,height:el.clientHeight}));
+    expect(sizes.width).toBeLessThanOrEqual(860);expect(sizes.height).toBeLessThan(850);
+  }
+  await page.setViewportSize(info.project.use.viewport);
+  await page.screenshot({path:`${artifacts}/liza-postscript-${info.project.name}.png`,fullPage:true});
   await page.getByRole("button",{name:"← Назад",exact:true}).click();
   await expect(page).toHaveURL(/\/last-scene$/);
   await expect(page.getByRole("status")).toHaveText("Фрагмент 4 из 4");
   await goNext(page);
-  await page.getByRole("button",{name:"К истории Никиты →"}).click();
+  await page.getByRole("button",{name:"Продолжить выставку — история Никиты"}).click();
   const end=await saved(page);
   expect(end.stories.liza.completed).toBe(true);
   expect(end.stories.nikita).toEqual(nikitaBefore);

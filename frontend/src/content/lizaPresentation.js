@@ -7,6 +7,11 @@ export default {
   archiveLabel: "ИСТОРИЯ 01 / ХОРОШАЯ ДЕВОЧКА",
   conclusionLabel: "ИСТОРИЯ 01 / ОБЪЯСНЕНИЕ",
   materialsCharacterName: "Лизы",
+  closing: {
+    label: "Послесловие",
+    endLabel: "Конец истории Лизы",
+    nextLabels: { nikita: "Продолжить выставку — история Никиты" },
+  },
   mapTitle: "Что осталось невидимым?",
   mapIntroduction: "Выберите наиболее обоснованный ответ в каждом из трёх эпизодов.",
   selection: {

@@ -200,3 +200,43 @@
 .story-shell .photo-album figure { border: 0; padding: 0; box-shadow: none; background: transparent; }
 .story-shell .photo-album figcaption p { font-size: 17px; line-height: 1.6; margin-bottom: 8px; }
 .story-shell .photo-album figcaption .album-description { color: var(--story-muted); font-size: 15px; }
+
+/* Reusable postscript surface, scoped to the dedicated closing stage only. */
+.story-shell .closing-card {
+  width: 100%; max-width: 860px; margin: 24px auto 20px;
+  padding: clamp(24px, 4.5vw, 54px);
+  border: 1px solid var(--story-light); border-radius: 3px;
+  background-color: var(--story-surface);
+  background-image: radial-gradient(circle, #76647f08 .6px, transparent .8px),
+    repeating-linear-gradient(0deg, transparent 0 3px, #76647f03 3px 4px);
+  background-size: 5px 5px, auto;
+  box-shadow: 0 8px 24px #3e364707;
+}
+.story-shell .closing-card .closing-kicker {
+  margin: 0 0 24px; font: 500 12px/1.5 Arial, sans-serif;
+  letter-spacing: .16em; color: var(--story-accent);
+}
+.story-shell .closing-card .closing-lead {
+  max-width: 34ch; margin: 0 0 28px; font-family: Georgia, serif;
+  font-size: clamp(27px, 3vw, 38px); line-height: 1.35; color: var(--story-ink);
+}
+.story-shell .closing-card .closing-body { max-width: 58ch; }
+.story-shell .closing-card .closing-body p { font-size: clamp(18px, 1.65vw, 21px); line-height: 1.75; margin-bottom: 0; }
+.story-shell .closing-card .closing-body p + p { margin-top: 18px; }
+.story-shell .closing-card .closing-end-label {
+  margin: 28px 0 0; font-size: 13px; line-height: 1.5;
+  letter-spacing: .06em; color: var(--story-accent);
+}
+.story-shell .story-design--closing > .step-nav {
+  max-width: 860px; margin: 20px auto 0; align-items: center; flex-wrap: wrap;
+}
+.story-shell .story-design--closing > .step-nav .primary {
+  max-width: 100%; white-space: normal; line-height: 1.5;
+}
+@media (max-width: 640px) {
+  .story-shell .closing-card { margin-top: 20px; }
+  .story-shell .closing-card .closing-kicker { margin-bottom: 20px; }
+  .story-shell .closing-card .closing-lead { margin-bottom: 22px; }
+  .story-shell .story-design--closing > .step-nav { flex-direction: column-reverse; align-items: stretch; gap: 8px; }
+  .story-shell .story-design--closing > .step-nav button { max-width: 100%; width: 100%; }
+}
