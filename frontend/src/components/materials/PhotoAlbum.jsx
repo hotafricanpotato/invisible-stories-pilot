@@ -1,3 +1,4 @@
+import { assetUrl } from "../../utils/assetUrl";
 export default function PhotoAlbum({ material, artwork = {} }) {
   return <section className="photo-album" aria-label={material.albumTitle}>
     <h3>{material.albumTitle}</h3>
@@ -5,7 +6,7 @@ export default function PhotoAlbum({ material, artwork = {} }) {
       const art = artwork[photo.id];
       const src = art?.src ?? photo.src;
       return <figure key={photo.id}>
-        {src ? <img src={src} alt={photo.description} width={art?.width} height={art?.height} /> : <div className="album-placeholder" role="img" aria-label={`Временная иллюстрация: ${photo.description}`}>
+        {src ? <img src={assetUrl(src)} alt={photo.description} width={art?.width} height={art?.height} /> : <div className="album-placeholder" role="img" aria-label={`Временная иллюстрация: ${photo.description}`}>
           <span className="eyebrow">Временная иллюстрация</span><p>{photo.description}</p>
         </div>}
         <figcaption>

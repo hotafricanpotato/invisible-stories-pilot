@@ -1,3 +1,4 @@
+import { assetUrl } from "../utils/assetUrl";
 import { useNavigate } from "react-router-dom";
 import { useExhibition } from "../state/Provider";
 import {
@@ -45,7 +46,7 @@ export function Home() {
         </div>
         <figure className="hero-image">
           <img
-            src="/assets/nikita/cover.jpg"
+            src={assetUrl("/assets/nikita/cover.jpg")}
             alt="Архивный художественный коллаж о повседневной жизни подростка"
             width="1122"
             height="1402"

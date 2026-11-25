@@ -91,3 +91,9 @@ npm run test:e2e
 Итоговый тест 1.0 подключён после третьей страницы статистики. Вопросы: `/final-test/1`–`/final-test/5`, разбор: `/final-test/review`. После разбора доступен `/epilogue`; старый `/complete` перенаправляет на него с проверкой доступа. Сохранения и проверки: [docs/final-test.md](docs/final-test.md).
 
 Эпилог: [docs/epilogue.md](docs/epilogue.md). Возврат к историям сохраняет прогресс; повтор всей выставки требует подтверждения сброса.
+
+## Альтернативная сборка GitHub Pages
+
+`npm run build:pages` создаёт `dist-pages/` с базой `/invisible-stories-pilot/` и HashRouter. Обычная команда `npm run build` сохраняет BrowserRouter и `dist/` для Vercel. Проверка статического размещения без SPA-fallback: `npm run test:e2e:pages` (после обеих сборок).
+
+Workflow подготовлен только для ручного запуска и не реагирует на push. Первоначальная публикация требует отдельного согласования и проверки ограничения default branch. Полная инструкция: [docs/github-pages.md](docs/github-pages.md).

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   BrowserRouter,
+  HashRouter,
   Routes,
   Route,
   Navigate,
@@ -64,7 +65,11 @@ function App() {
   }, [resetOpen]);
   return (
     <div className={storyTheme ? "app-shell story-shell" : location.pathname === "/stories" ? "app-shell selection-shell" : location.pathname.startsWith("/statistics") || finalSurface || epilogueSurface ? `app-shell statistics-shell${finalSurface ? " final-test-shell" : ""}${epilogueSurface ? " epilogue-shell" : ""}` : location.pathname === "/" ? "app-shell home-shell" : "app-shell"} data-story-theme={storyTheme}>
-      <a className="skip-link" href="#main">
+      <a className="skip-link" href="#main" onClick={event => {
+        event.preventDefault();
+        main.current?.focus({ preventScroll: true });
+        main.current?.scrollIntoView({ block: "start" });
+      }}>
         К содержанию
       </a>
       <header className="site-header">
@@ -156,13 +161,14 @@ function App() {
     </div>
   );
 }
+const ExhibitionRouter = __PAGES_BUILD__ ? HashRouter : BrowserRouter;
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <ExhibitionRouter>
       <Provider>
         <App />
       </Provider>
-    </BrowserRouter>
+    </ExhibitionRouter>
   </React.StrictMode>,
 );
 

@@ -1,3 +1,4 @@
+import { assetUrl } from "../utils/assetUrl";
 import { Paragraphs } from "./UI";
 import { useEffect } from "react";
 import PhotoAlbum from "./materials/PhotoAlbum";
@@ -10,7 +11,7 @@ export function Photo({ art, compact = false }) {
   return (
     <figure className={`archive-photo ${compact ? "compact-photo" : ""}`}>
       <img
-        src={art.src}
+        src={assetUrl(art.src)}
         alt={art.alt ?? `Художественная реконструкция: ${art.label}`}
         width={art.width}
         height={art.height}

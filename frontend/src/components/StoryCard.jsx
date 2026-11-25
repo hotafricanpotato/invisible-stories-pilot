@@ -1,3 +1,4 @@
+import { assetUrl } from "../utils/assetUrl";
 export default function StoryCard({ entry, number, story, status, onOpen }) {
   const cover = story?.presentation.selection?.cover ?? story?.presentation.artwork?.introduction?.src;
   const locked = status === "Недоступна";
@@ -5,7 +6,7 @@ export default function StoryCard({ entry, number, story, status, onOpen }) {
   return (
     <article className="archive-story-card" data-story-theme={entry.theme} aria-labelledby={`card-${entry.id}`}>
       <div className="archive-card-art">
-        {cover ? <img src={cover}
+        {cover ? <img src={assetUrl(cover)}
           alt={story.presentation.selection.alt ?? story.presentation.artwork?.introduction?.label} /> : <div className="archive-card-pending" aria-hidden="true">03 / АРХИВ<br />В ПОДГОТОВКЕ</div>}
       </div>
       <div className="archive-card-body">
