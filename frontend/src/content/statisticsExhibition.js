@@ -16,8 +16,10 @@ export const statisticsRecords = {
     source: {label: "UNICEF, 11 июня 2024 года", url: legacy.sources.global},
   },
   regional: {
-    id: "regional", min: 40, max: 69, geography: "Европа и Центральная Азия", publicationYear: 2025, dataPeriod: null,
-    description: legacy.data[1][3], limitation: legacy.data[1][4],
+    id: "regional", min: 36, max: 69, geography: "Европа и Центральная Азия", publicationYear: 2025, dataPeriod: null,
+    description: "В 15 странах и территориях Европы и Центральной Азии с сопоставимыми данными от 36% до 69% детей в возрасте 1–14 лет сталкивались с психологической агрессией со стороны взрослых, осуществляющих уход, в течение последнего месяца",
+    age: "1–14 лет", observationPeriod: "последний месяц", countryCount: 15,
+    limitation: "Диапазон относится к отдельным странам и территориям с сопоставимыми данными, а не к среднему значению по всему региону. Годы исходных исследований различаются.",
     source: {label: "UNICEF — Where we live and learn, 2025", url: legacy.sources.eca},
   },
   neglect: {

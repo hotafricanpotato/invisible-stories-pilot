@@ -63,7 +63,7 @@ function App() {
     if (resetOpen) cancel.current?.focus();
   }, [resetOpen]);
   return (
-    <div className={storyTheme ? "app-shell story-shell" : location.pathname === "/stories" ? "app-shell selection-shell" : location.pathname.startsWith("/statistics") || finalSurface || epilogueSurface ? `app-shell statistics-shell${finalSurface ? " final-test-shell" : ""}${epilogueSurface ? " epilogue-shell" : ""}` : "app-shell"} data-story-theme={storyTheme}>
+    <div className={storyTheme ? "app-shell story-shell" : location.pathname === "/stories" ? "app-shell selection-shell" : location.pathname.startsWith("/statistics") || finalSurface || epilogueSurface ? `app-shell statistics-shell${finalSurface ? " final-test-shell" : ""}${epilogueSurface ? " epilogue-shell" : ""}` : location.pathname === "/" ? "app-shell home-shell" : "app-shell"} data-story-theme={storyTheme}>
       <a className="skip-link" href="#main">
         К содержанию
       </a>
@@ -90,7 +90,7 @@ function App() {
       {resetOpen && (
         <div className="reset-panel" role="region" aria-label="Сброс прогресса">
           <p>
-            Начать выставку заново? Ответы и прогресс в текущей вкладке будут
+            Начать выставку заново? Сохранённые ответы и прогресс выставки будут
             удалены.
           </p>
           <div>

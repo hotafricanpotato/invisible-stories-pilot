@@ -1,15 +1,15 @@
 /* Story themes are applied to the full app shell, never to quiz/statistics/pilot completion. */
 [data-story-theme="nikita"] {
   --story-bg: #e9d9c7; --story-surface: #f3e7d8; --story-light: #d8b8a2;
-  --story-mid: #b9785d; --story-accent: #9d5946; --story-ink: #302824; --story-muted: #66564d;
+  --story-text-accent: #864b3c; --story-mid: #b9785d; --story-accent: #9d5946; --story-ink: #302824; --story-muted: #66564d;
 }
 [data-story-theme="liza"] {
   --story-bg: #eee6e8; --story-surface: #f8f3f4; --story-light: #d2c0ce;
-  --story-mid: #a18dab; --story-accent: #76647f; --story-ink: #3e3647; --story-muted: #66586b;
+  --story-text-accent: #6b5974; --story-mid: #a18dab; --story-accent: #76647f; --story-ink: #3e3647; --story-muted: #66586b;
 }
 [data-story-theme="ilya"] {
   --story-bg: #e7e5d9; --story-surface: #f0f0e7; --story-light: #c0c5ae;
-  --story-mid: #929d80; --story-accent: #65745b; --story-ink: #384437; --story-muted: #56614f;
+  --story-text-accent: #56654c; --story-mid: #929d80; --story-accent: #65745b; --story-ink: #384437; --story-muted: #56614f;
 }
 .story-shell {
   --accent: var(--story-accent); --warm: var(--story-accent);
@@ -28,7 +28,7 @@
 .story-shell .brand { color: var(--story-ink); }
 .story-shell .brand-mark, .story-shell .edition span { color: var(--story-accent); }
 .story-shell .route-strip { margin-top: 0; padding-block: 4px 16px; color: var(--story-muted); }
-.story-shell .route-strip .current { color: var(--story-accent); }
+.story-shell .route-strip .current { color: var(--story-text-accent); }
 .story-shell > footer { margin-top: auto; padding-block: 32px; }
 .story-main {
   width: min(100%, 1200px); margin: 20px auto 40px;
@@ -89,7 +89,7 @@
 .story-shell .material { padding: 24px 0; background: none; border: 0; border-radius: 0; margin: 12px 0; }
 .story-shell .material-heading { align-items: baseline; }
 .story-shell .material h2 { margin-bottom: 6px; font-size: 27px; font-weight: 500; }
-.story-shell .disclosure { width: auto; border: 0; padding: 8px 0; color: var(--story-accent); min-height: 44px; }
+.story-shell .disclosure { width: auto; border: 0; padding: 8px 0; color: var(--story-text-accent); min-height: 44px; }
 .material-viewer { max-width: 760px; margin: 12px 0 24px; padding: 0; background: none; border: 0; }
 .story-shell .material-content { margin-top: 12px; }
 .story-shell .material-viewer .chat { max-width: none; }
@@ -265,3 +265,13 @@
   margin-top: 32px; padding-top: 18px;
   border-top: 1px solid var(--story-light); text-align: right;
 }
+
+.story-shell .choice-letter { color:var(--story-text-accent); }
+
+/* Small accent labels and primary hover states retain readable contrast. */
+.story-shell .dialogue-speaker,.story-shell .studied,.story-shell .warning,.story-shell .deleted,
+.story-shell .factor-grid .eyebrow,.story-shell .closing-card .closing-kicker,
+.story-shell .closing-card .closing-end-label,
+.story-shell[data-story-theme="ilya"] .ilya-context-note .eyebrow,
+.story-shell .ending .emphasis { color:var(--story-text-accent); }
+.story-shell button.primary:hover:not(:disabled) { background:var(--story-accent); color:#fff; }

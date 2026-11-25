@@ -1131,3 +1131,33 @@ footer {
     width: 100%;
   }
 }
+
+/* Keep the start control above AA contrast without changing its composition. */
+.home-main button.primary { background:#b24e42; }
+
+/* Home only: the approved composition on the exhibition's warm archival ground. */
+.home-shell {
+  --accent: #9d5946; --warm: #864b3c; --muted: #66564d;
+  --line: #d8b8a2; --paper: #e4d6c5;
+  min-height: 100vh; min-height: 100dvh;
+  color: #302824; background-color: #f1e9e1;
+  background-image: radial-gradient(#9d594609 .6px, transparent .9px), repeating-linear-gradient(5deg, transparent 0 5px, #9d594602 5px 6px);
+  background-size: 5px 5px, auto;
+}
+.home-shell .brand, .home-shell a { color: #302824; }
+.home-shell a:hover { color: #864b3c; }
+.home-shell .route-strip, .home-shell > footer,
+.home-shell .hero-index, .home-shell .hero-detail { color: var(--muted); }
+.home-shell .route-strip .current, .home-shell .hero h1 span { color: #864b3c; }
+.home-shell .hero h1, .home-shell .intro h2,
+.home-shell .intro h3 { font-family: Georgia, serif; font-weight: 500; }
+.home-shell .hero-image { box-shadow: 0 12px 28px #5c40351c; }
+.home-shell .intro-grid article { border-color: var(--line); }
+.home-shell .note, .home-shell .reset-panel,
+.home-shell .skip-link { background: #eee2d6; color: #302824; }
+.home-shell button { background: transparent; color: #302824; border-color: #a78775; }
+.home-shell button:hover:not(:disabled) { background: #e6d7c8; border-color: #864b3c; }
+.home-shell button.primary { background: #b24e42; border-color: #b24e42; color: #fff; }
+.home-shell button.primary:hover:not(:disabled) { background: #9c4338; border-color: #9c4338; color: #fff; }
+.home-shell button:focus-visible, .home-shell a:focus-visible { outline-color: #864b3c; }
+.home-shell .hero-index span { color: #864b3c; }

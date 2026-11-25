@@ -1,5 +1,7 @@
 # Story design foundation
 
+> Актуализация после финального аудита: прогресс теперь хранится в localStorage с однократной миграцией sessionStorage. Срок хранения больше не ограничен вкладкой. Исторические описания sessionStorage ниже относятся к предыдущим этапам. Подробности: [audit-fixes.md](audit-fixes.md).
+
 Branch: story-design-system (based on story-engine-foundation).
 
 ## Local preview on Windows 11

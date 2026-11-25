@@ -7,8 +7,8 @@ import {finishStory} from '../story-helpers.js';
 import {statisticsRecords as r} from '../../src/content/statisticsExhibition.js';
 const complete=()=>['liza','nikita','ilya'].reduce((s,id)=>finishStory(s,id,model,storyRegistry),model.initialState());
 const artifacts=process.env.ARTIFACT_DIR||path.resolve('../../output');
-async function seed(page,s){await page.goto('http://pilot.test/');await page.evaluate(s=>sessionStorage.setItem('invisible-stories:pilot:v1',JSON.stringify(s)),s);}
-const saved=page=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('invisible-stories:pilot:v1')));
+async function seed(page,s){await page.goto('http://pilot.test/');await page.evaluate(s=>localStorage.setItem('invisible-stories:pilot:v1',JSON.stringify(s)),s);}
+const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('invisible-stories:pilot:v1')));
 test('three pages: exact records, navigation, top, screenshots, sources and progress',async({page},info)=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));const state=complete();await seed(page,state);
  await page.goto('http://pilot.test/stories');await page.getByRole('button',{name:'Перейти к „Невидимой статистике“'}).click();
@@ -21,7 +21,7 @@ test('three pages: exact records, navigation, top, screenshots, sources and prog
    await expect(page.getByRole('link',{name:r[key].source.label,exact:false})).toHaveAttribute('href',r[key].source.url);
   }
   if(n===1){await expect(page.locator('.recognition-bar')).toHaveCount(4);for(const [name,value] of r.recognition.values) await expect(page.locator('.recognition-bar').filter({hasText:name})).toContainText(String(value).replace('.',',')+'%');await expect(page.locator('main')).toContainText('опрос 1600 взрослых жителей России');}
-  if(n===2){await expect(page.locator('.statistics-dots .is-highlighted')).toHaveCount(6);const v=await page.locator('.statistics-range-track > span').evaluate(el=>({left:el.offsetLeft,width:el.offsetWidth,parent:el.parentElement.offsetWidth}));expect(Math.abs(v.left/v.parent-.4)).toBeLessThan(.01);expect(Math.abs(v.width/v.parent-.29)).toBeLessThan(.01);}
+  if(n===2){await expect(page.locator('.statistics-dots .is-highlighted')).toHaveCount(6);const v=await page.locator('.statistics-range-track > span').evaluate(el=>({left:el.offsetLeft,width:el.offsetWidth,parent:el.parentElement.offsetWidth}));expect(Math.abs(v.left/v.parent-.36)).toBeLessThan(.01);expect(Math.abs(v.width/v.parent-.33)).toBeLessThan(.01);}
   if(n===3){await expect(page.locator('main')).toContainText('NSDUH, 2023');await expect(page.getByRole('link',{name:r.alcohol.explanationSource.label,exact:false})).toHaveAttribute('href',r.alcohol.explanationSource.url);}
   for(const width of [320,390,768,1440,1920]) {await page.setViewportSize({width,height:1000});await noOverflow(page);}
   const width=info.project.name==='desktop'?1440:390;await page.setViewportSize({width,height:1000});await page.evaluate(()=>document.fonts.ready);

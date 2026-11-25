@@ -1,7 +1,7 @@
 {
   "src/content/initialQuiz.json": "c7a20b8c1f2bc0c1404e2006b463e36d1d32d821b0db259b9801f2c29cdfb51d",
   "src/content/nikita.json": "87a311e7c3afdef51e0e98055b78601a324a94e4066b3e7f22180db14fab6331",
-  "src/content/statistics.json": "1b11244beaa1f33813f8ea18bdb2ade948c55527651012c8f18eceda06a8754e",
+  "src/content/statistics.json": "7d3ef05f7f13ae6341ba89f1bd7fab9e7cd028351a0a6b17688a75bbbf8d3f3e",
   "src/pages/Statistics.jsx": "5fd99494249eb543f89408c77c56bfca7b4a70631dc9fe4a8f2c6eac4d366c32",
   "vercel.json": "de9adc878b1e39c9d8f44aef60c54c9c53584591990fd6653563438caa0dafba",
   "public/assets/nikita/messages.jpg": "70384911f14fd4f340ee235dd5d1063ed1224cfc4e9963ae01dd604d8d5d0db6",

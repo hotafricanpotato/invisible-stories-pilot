@@ -6,8 +6,8 @@ import {storyRegistry} from '../../src/content/storyRegistry.js';
 import {finishStory} from '../story-helpers.js';
 import content from '../../src/content/finalTest.json' with {type:'json'};
 const ready=()=>['liza','nikita','ilya'].reduce((s,id)=>finishStory(s,id,model,storyRegistry),model.initialState());
-const saved=page=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('invisible-stories:pilot:v1')));
-async function seed(page,s){await page.goto('http://pilot.test/');await page.evaluate(s=>sessionStorage.setItem('invisible-stories:pilot:v1',JSON.stringify(s)),s);}
+const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('invisible-stories:pilot:v1')));
+async function seed(page,s){await page.goto('http://pilot.test/');await page.evaluate(s=>localStorage.setItem('invisible-stories:pilot:v1',JSON.stringify(s)),s);}
 const artifacts=process.env.ARTIFACT_DIR||path.resolve('../../output');
 test('exact five-question route, review, reload, replay and screenshots',async({page},info)=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));const original=ready();await seed(page,original);await page.goto('http://pilot.test/statistics/1');

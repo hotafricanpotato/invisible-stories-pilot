@@ -10,7 +10,7 @@ const story = JSON.parse(await readFile("src/content/nikita.json", "utf8"));
 const stats = JSON.parse(await readFile("src/content/statistics.json", "utf8"));
 // This regression explicitly starts with Liza completed, using real reducer actions.
 async function completeLizaForNikitaRegression(page) {
-  const saved=await page.evaluate(()=>sessionStorage.getItem("invisible-stories:pilot:v1"));
+  const saved=await page.evaluate(()=>localStorage.getItem("invisible-stories:pilot:v1"));
   let s=restore(saved);
   const definition=storyRegistry.liza;
   for(let i=0;i<definition.steps.length;i++) {
@@ -26,7 +26,7 @@ async function completeLizaForNikitaRegression(page) {
   }
   s=reducer(s,{type:"STORY_COMPLETE",storyId:"liza"});
   expect(s.stories.liza.completed).toBe(true);
-  await page.evaluate(s=>sessionStorage.setItem("invisible-stories:pilot:v1",JSON.stringify(s)),s);
+  await page.evaluate(s=>localStorage.setItem("invisible-stories:pilot:v1",JSON.stringify(s)),s);
   await page.reload();
 }
 test("complete production exhibition, exact content, gates, reload, reset and no answer transmission", async ({
@@ -218,7 +218,7 @@ test("guarded direct links, small layouts, keyboard and unavailable storage", as
   await start.focus();await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/liza\/introduction$/);
   await page.addInitScript(() => {
-    Object.defineProperty(window,"sessionStorage",{get(){throw new Error("blocked");}});
+    Object.defineProperty(window,"localStorage",{get(){throw new Error("blocked");}});
   });
   await page.goto("http://pilot.test/");
   await expect(page.getByRole("status")).toContainText("Хранилище браузера недоступно");
@@ -251,7 +251,7 @@ test("single live reply, full chat, back, reload, keyboard and responsive layout
   await page.getByRole("button", { name: "← Назад", exact: true }).click();
   await page.reload();
   await expect(page.getByRole("status")).toHaveText("Фрагмент 2 из 10");
-  const saved = await page.evaluate(() => JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")));
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("invisible-stories:pilot:v1")));
   expect(saved.stories.nikita.revealedFragments.keys).toBe(3);
   for (const width of [320, 360, 390, 430, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
@@ -298,7 +298,7 @@ test("existing v1 session migrates in the browser without replaying visited scen
   await page.goto("http://pilot.test/");
   await page.evaluate(
     (value) =>
-      sessionStorage.setItem(
+      localStorage.setItem(
         "invisible-stories:pilot:v1",
         JSON.stringify(value),
       ),
@@ -306,7 +306,7 @@ test("existing v1 session migrates in the browser without replaying visited scen
   );
   await page.goto("http://pilot.test/stories/nikita/map");
   await expect(page).toHaveURL(/\/stories$/);
-  let migrated=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")));
+  let migrated=await page.evaluate(()=>JSON.parse(localStorage.getItem("invisible-stories:pilot:v1")));
   expect(migrated.stories.nikita.answers).toEqual(legacy.nikita.answers);
   expect(migrated.stories.nikita.unlocked).toBe(5);
   await completeLizaForNikitaRegression(page);
@@ -329,7 +329,7 @@ test("existing v1 session migrates in the browser without replaying visited scen
   await page.reload();
   await expect(page.getByRole("status")).toHaveText("Фрагмент 7 из 7");
   const saved = await page.evaluate(() =>
-    JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")),
+    JSON.parse(localStorage.getItem("invisible-stories:pilot:v1")),
   );
   expect(saved.version).toBe(6);
   expect(saved.quiz).toEqual(legacy.quiz);
@@ -347,11 +347,11 @@ test("v2 reading migration, theme tokens, material close and mobile reading", as
   await revealAll(page);
   await page.evaluate(() => {
     const key = "invisible-stories:pilot:v1";
-    const saved = JSON.parse(sessionStorage.getItem(key));
+    const saved = JSON.parse(localStorage.getItem(key));
     saved.version = 2;
     delete saved.stories.nikita.currentFragments;
     saved.stories.nikita.revealedFragments.keys = 6;
-    sessionStorage.setItem(key, JSON.stringify(saved));
+    localStorage.setItem(key, JSON.stringify(saved));
   });
   await page.reload();
   await expect(page.getByRole("status")).toHaveText("Фрагмент 6 из 10");

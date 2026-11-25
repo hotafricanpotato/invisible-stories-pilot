@@ -9,7 +9,7 @@ import { storyRegistry } from '../../src/content/storyRegistry.js';
 import { finishStory } from '../story-helpers.js';
 const button=page=>page.getByRole('button',{name:'Перейти к „Невидимой статистике“'});
 const status=(page,id)=>page.locator(`[aria-labelledby="card-${id}"] .archive-card-status`);
-const saved=page=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('invisible-stories:pilot:v1')));
+const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('invisible-stories:pilot:v1')));
 const notice='Все три истории завершены. Теперь доступна „Невидимая статистика“';
 const artifacts=process.env.ARTIFACT_DIR||path.resolve('../../work');
 test('full route twice: three real UI completions, exact notice, reset, replay, statistics and technical finish',async({page},info)=>{
@@ -81,7 +81,7 @@ test('old pilot statistics access survives as data, never as permission; partial
   await page.goto('http://pilot.test/');
   for(const version of [4,5,6]) {
     const input=structuredClone(old);input.version=version;
-    await page.evaluate(s=>sessionStorage.setItem('invisible-stories:pilot:v1',JSON.stringify(s)),input);
+    await page.evaluate(s=>localStorage.setItem('invisible-stories:pilot:v1',JSON.stringify(s)),input);
     await page.goto('http://pilot.test/complete');await expect(page).toHaveURL(/\/stories$/);
     await expect(button(page)).toBeDisabled();await expect(status(page,'ilya')).toHaveText('Доступна');
     for(const route of ['/statistics/1','/statistics/4','/complete']) {
@@ -100,7 +100,7 @@ test('old pilot statistics access survives as data, never as permission; partial
   // Preserve the exact partial state through migration; complete via the real model to verify the old stats return.
   let completed=model.restore(JSON.stringify(await saved(page)));
   completed=finishStory(completed,'ilya',model,storyRegistry);
-  await page.evaluate(s=>sessionStorage.setItem('invisible-stories:pilot:v1',JSON.stringify(s)),completed);
+  await page.evaluate(s=>localStorage.setItem('invisible-stories:pilot:v1',JSON.stringify(s)),completed);
   await page.goto('http://pilot.test/stories');await expect(button(page)).toBeEnabled();
   await button(page).click();await expect(page).toHaveURL(/\/statistics\/1$/);
   expect((await saved(page)).stats).toEqual({...old.stats,currentPage:1});

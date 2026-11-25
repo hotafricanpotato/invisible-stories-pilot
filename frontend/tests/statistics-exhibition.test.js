@@ -12,7 +12,7 @@ test('five approved records, one shared UNICEF estimate and exact sources/defini
  assert.equal(r.recognition.sampleSize,1600);assert.equal(r.recognition.population,'взрослые жители России');
  assert.equal(r.global.numerator,6);assert.equal(r.global.denominator,10);assert.equal(r.global.publicationDate,'2024-06-11');
  assert.equal(r.global.source.url,'https://www.unicef.org/press-releases/nearly-400-million-young-children-worldwide-regularly-experience-violent-discipline');
- assert.deepEqual([r.regional.min,r.regional.max],[40,69]);
+ assert.deepEqual([r.regional.min,r.regional.max],[36,69]);
  assert.deepEqual([r.neglect.value,r.neglect.affected,r.neglect.sampleSize],[35.7,81,227]);
  assert.equal(r.neglect.source.url,'https://psyjournals.ru/journals/sps/archive/2016_n2/volkova');
  assert.equal(r.neglect.publicationYear,2016);assert.equal(r.neglect.dataPeriod,null);
@@ -53,3 +53,7 @@ test('page visits preserve completion and stories; invalid or locked visits do n
  const locked=initialState();assert.equal(reducer(locked,{type:'STATS_VISIT',page:1}),locked);
  s=reducer(s,{type:'STATS_COMPLETE'});s=reducer(s,{type:'STATS_VISIT',page:1});assert.equal(s.stats.completed,true);
 });
+
+test("regional record specifies the approved age, countries and observation period",()=>{assert.equal(r.regional.countryCount,15);assert.equal(r.regional.age,"1–14 лет");assert.equal(r.regional.observationPeriod,"последний месяц");assert.ok(r.regional.description.includes("от 36% до 69%"));assert.ok(r.regional.description.includes("в течение последнего месяца"));});
+
+test('all legacy statistical content except the approved regional correction stays unchanged',async()=>{const {readFile}=await import('node:fs/promises');const before=JSON.parse(await readFile(new URL('./fixtures/statistics-unchanged-records.json',import.meta.url),'utf8'));const now=JSON.parse(await readFile(new URL('../src/content/statistics.json',import.meta.url),'utf8'));now.data=now.data.filter(record=>record[0]!=='eca');assert.deepEqual(now,before);});

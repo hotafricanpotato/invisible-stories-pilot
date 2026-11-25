@@ -6,7 +6,7 @@ import path from "node:path";
 import { reducer } from "../../src/state/model.js";
 const liza=storyRegistry.liza;
 const artifacts=process.env.ARTIFACT_DIR || path.resolve("../../work");
-const saved = page => page.evaluate(()=>JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")));
+const saved = page => page.evaluate(()=>JSON.parse(localStorage.getItem("invisible-stories:pilot:v1")));
 async function checkArtwork(page, selector = ".scene-artwork img") {
   const images=page.locator(selector);
   for(const image of await images.all()) {
@@ -186,7 +186,7 @@ test("Liza responsive content and independent story resume",async({page},info)=>
 
 test("completed v3 pilot keeps data and replay while statistics waits for Liza",async({page})=>{
   await page.goto("http://pilot.test/");
-  await page.evaluate(()=>sessionStorage.setItem("invisible-stories:pilot:v1",JSON.stringify({
+  await page.evaluate(()=>localStorage.setItem("invisible-stories:pilot:v1",JSON.stringify({
     version:3,contentVersion:"pilot-1",cursor:"/complete",
     quiz:{answers:{0:"B",1:"C",2:"C",3:"A",4:"C"},completed:true},
     stories:{nikita:{unlocked:6,currentStepId:"conclusion",opened:["dima_chat","phone_note","voice_message"],active:"phone_note",
@@ -227,7 +227,7 @@ test("all seven approved images keep full composition on desktop and mobile", as
     if(i<liza.steps.length-1) state=reducer(state,{type:"STORY_ADVANCE",storyId:"liza",index:i});
   }
   state.stories.liza.active="family-album";
-  await page.evaluate(s=>sessionStorage.setItem("invisible-stories:pilot:v1",JSON.stringify(s)),state);
+  await page.evaluate(s=>localStorage.setItem("invisible-stories:pilot:v1",JSON.stringify(s)),state);
   for(const width of [360,390,430,1280,1920]) {
     await page.setViewportSize({width,height:900});
     for(const scene of liza.scenes) {

@@ -8,13 +8,13 @@ import { finishStory } from "../story-helpers.js";
 const ilya=storyRegistry.ilya;
 const model=createExhibitionModel(storyRegistry,{...exhibitionConfig,availableStoryIds:['liza','nikita','ilya']});
 const artifacts=process.env.ARTIFACT_DIR || path.resolve('../../work');
-const readState=page=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('invisible-stories:pilot:v1')));
+const readState=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('invisible-stories:pilot:v1')));
 async function prepare(page,finishNikita=true) {
   await page.goto('http://pilot.test/stories');
   let s=model.initialState();
   s=finishStory(s,'liza',model,storyRegistry);
   if(finishNikita) s=finishStory(s,'nikita',model,storyRegistry);
-  await page.evaluate(s=>sessionStorage.setItem('invisible-stories:pilot:v1',JSON.stringify(s)),s);
+  await page.evaluate(s=>localStorage.setItem('invisible-stories:pilot:v1',JSON.stringify(s)),s);
   await page.reload();
   return s;
 }
@@ -162,7 +162,7 @@ test('Ilya prerequisite guard, mixed scene back/reload and mobile artwork',async
 test('all seven approved images keep full proportions at desktop and mobile widths',async({page},info)=>{
   let state=await prepare(page);
   state=finishStory(state,'ilya',model,storyRegistry);
-  await page.evaluate(s=>sessionStorage.setItem('invisible-stories:pilot:v1',JSON.stringify(s)),state);
+  await page.evaluate(s=>localStorage.setItem('invisible-stories:pilot:v1',JSON.stringify(s)),state);
   for(const width of [320,390,430,1440,1920]) {
     await page.setViewportSize({width,height:900});
     for(const scene of ilya.scenes) {

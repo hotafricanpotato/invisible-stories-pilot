@@ -127,3 +127,5 @@
 .statistics-introduction h1:focus { outline:none; }
 .statistics-exhibition > .statistics-section { margin-top:24px; padding-top:22px; }
 .statistics-page-1 .statistics-recognition { padding-block:12px 8px; }
+
+.statistics-shell .route-strip { color:var(--statistics-muted); }

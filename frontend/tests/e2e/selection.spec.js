@@ -44,7 +44,7 @@ test("selection palettes, breakpoints, resume and reset never return to the entr
   await expect(statsButton(page)).toBeDisabled();
   await card(page,"liza").getByRole("button",{name:"Начать историю"}).click();
   await expect(page.getByRole("status")).toHaveText("Фрагмент 1 из 3");
-  const state=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")));
+  const state=await page.evaluate(()=>JSON.parse(localStorage.getItem("invisible-stories:pilot:v1")));
   expect(state.quiz).toEqual({answers:{},completed:false});
   expect(state.stories.nikita.completed).toBe(false);
   expect(state.stats.unlocked).toBe(0);
@@ -60,15 +60,15 @@ test("v4 partial progress and current reply survive new locks, then resume after
   saved.version=4;saved.cursor="/stories/nikita/keys";
   saved.quiz={answers:{0:"A",1:"C"},completed:false};
   await openSelection(page);
-  await page.evaluate(s=>sessionStorage.setItem("invisible-stories:pilot:v1",JSON.stringify(s)),saved);
+  await page.evaluate(s=>localStorage.setItem("invisible-stories:pilot:v1",JSON.stringify(s)),saved);
   await page.goto("http://pilot.test/stories/nikita/keys");
   await expect(page).toHaveURL(/\/stories$/);
-  const migrated=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("invisible-stories:pilot:v1")));
+  const migrated=await page.evaluate(()=>JSON.parse(localStorage.getItem("invisible-stories:pilot:v1")));
   expect(migrated.version).toBe(6);
   expect(migrated.stories.nikita).toEqual(saved.stories.nikita);
   expect(migrated.quiz).toEqual(saved.quiz);
   const unlocked=finishStory(migrated,"liza",model,storyRegistry);
-  await page.evaluate(s=>sessionStorage.setItem("invisible-stories:pilot:v1",JSON.stringify(s)),unlocked);
+  await page.evaluate(s=>localStorage.setItem("invisible-stories:pilot:v1",JSON.stringify(s)),unlocked);
   await page.reload();
   await expect(card(page,"nikita").locator(".archive-card-status")).toHaveText("В процессе");
   await card(page,"nikita").getByRole("button",{name:"Продолжить",exact:true}).click();

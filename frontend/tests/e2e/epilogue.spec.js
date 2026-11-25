@@ -6,8 +6,8 @@ import {storyRegistry} from '../../src/content/storyRegistry.js';
 import {finishStory} from '../story-helpers.js';
 import content from '../../src/content/epilogue.json' with {type:'json'};
 const ready=()=>['liza','nikita','ilya'].reduce((s,id)=>finishStory(s,id,model,storyRegistry),model.initialState());
-const saved=page=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('invisible-stories:pilot:v1')));
-async function seed(page,s){await page.goto('http://pilot.test/');await page.evaluate(s=>sessionStorage.setItem('invisible-stories:pilot:v1',JSON.stringify(s)),s);}
+const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('invisible-stories:pilot:v1')));
+async function seed(page,s){await page.goto('http://pilot.test/');await page.evaluate(s=>localStorage.setItem('invisible-stories:pilot:v1',JSON.stringify(s)),s);}
 const artifacts=process.env.ARTIFACT_DIR||path.resolve('../../output');
 test('statistics, real final test, exact epilogue, reload, history return, confirmed restart and screenshots',async({page},info)=>{
  const errors=[],requests=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>requests.push(r.url()));
