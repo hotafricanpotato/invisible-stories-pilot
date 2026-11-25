@@ -278,12 +278,12 @@ export function createExhibitionModel(registry, options = {}) {
     if (/^\/statistics\/[1-3]$/.test(path)) return path;
     if (path === "/statistics/4") return "/statistics/3";
     if (path === "/statistics") return "/statistics/1";
-    if (path.startsWith("/final-test") || path === "/complete") {
+    if (path.startsWith("/final-test") || path === "/complete" || path === "/epilogue") {
       if (!canEnterStats(s)) return "/stories";
       if (!canEnterFinalTest(s)) return "/statistics/1";
       const fallback = `/final-test/${firstUnanswered(s)}`;
-      if (path === "/complete" || path === "/final-test/review")
-        return s.finalTest?.completed === true && finalAnswered(s) ? path : fallback;
+      if (path === "/complete" || path === "/epilogue" || path === "/final-test/review")
+        return s.finalTest?.completed === true && finalAnswered(s) ? (path === "/complete" ? "/epilogue" : path) : fallback;
       if (path === "/final-test") return fallback;
       const question = path.match(/^\/final-test\/([1-5])$/);
       return question && Number(question[1]) <= firstUnanswered(s) ? path : fallback;

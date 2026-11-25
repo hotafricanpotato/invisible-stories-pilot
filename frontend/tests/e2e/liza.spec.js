@@ -158,7 +158,7 @@ test("Liza full approved scenario, independent progress, album, gates and exact 
   await page.getByRole("button",{name:"Далее",exact:true}).click();
   await page.getByRole("button",{name:"Завершить просмотр"}).click();
   await completeFinalTestInBrowser(page);
-  await expect(page).toHaveURL(/\/complete$/);
+  await expect(page).toHaveURL(/\/epilogue$/);
   expect(errors).toEqual([]);
   expect(requests.filter(r=>new URL(r.url).origin!=="http://pilot.test"||r.method!=="GET"||r.body)).toEqual([]);
 });

@@ -11,6 +11,6 @@ export const exhibitionConfig = {
   postStoriesPath: "/stories",
   fullVersionStoryCount: 3,
   finalQuizEnabled: true,
-  epilogueEnabled: false,
+  epilogueEnabled: true,
   contentVersion: "pilot-1",
 };

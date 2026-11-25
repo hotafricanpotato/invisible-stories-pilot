@@ -1,0 +1,58 @@
+/* The epilogue is a reading page, without statistic panels or decorative objects. */
+.epilogue-main { max-width:1120px; margin-top:28px; }
+.epilogue { max-width:920px; margin:0 auto; padding-bottom:12px; }
+.epilogue h1 { font:500 clamp(38px,4.5vw,64px)/1.08 Georgia,'Times New Roman',serif; letter-spacing:-.035em; margin:0 0 36px; max-width:19ch; }
+.epilogue-text { max-width:68ch; }
+.epilogue p { font-size:19px; line-height:1.65; margin:0 0 24px; }
+.epilogue-text strong { font-weight:650; }
+.epilogue .epilogue-note { color:var(--statistics-muted); font-size:15px; line-height:1.6; margin-top:-8px; margin-bottom:32px; }
+.epilogue-sources { display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:8px; }
+.epilogue-sources a { color:var(--statistics-muted); text-decoration:underline; text-underline-offset:3px; overflow-wrap:anywhere; }
+.epilogue-sources a:hover { color:var(--statistics-ink); }
+.epilogue hr { height:0; border:0; border-top:1px solid var(--statistics-line); margin:32px 0; }
+.epilogue-closing p { font:500 clamp(25px,2.65vw,34px)/1.35 Georgia,'Times New Roman',serif; color:var(--statistics-accent); margin:0 0 10px; max-width:38ch; }
+.epilogue-closing strong { font-weight:600; }
+.epilogue-navigation { display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-top:26px; }
+.epilogue-shell .route-strip { flex-wrap:wrap; }
+@media(max-width:700px) {
+ .epilogue-main { margin-top:18px; }
+ .epilogue h1 { font-size:clamp(34px,9vw,44px); margin-bottom:28px; }
+ .epilogue p { font-size:18px; line-height:1.65; }
+ .epilogue .epilogue-note { font-size:14px; }
+ .epilogue-closing p { font-size:26px; line-height:1.4; }
+ .epilogue-navigation { flex-direction:column; }
+}
+
+/* Experimental hierarchy: editorial sections, unchanged authored text. */
+.epilogue-introduction { margin-bottom:38px; }
+.epilogue-introduction p:first-child { font:400 24px/1.5 Georgia,'Times New Roman',serif; }
+.epilogue .epilogue-notice p,
+.epilogue .epilogue-parenthood p:first-child {
+ font:500 clamp(25px,2.5vw,31px)/1.3 Georgia,'Times New Roman',serif;
+ color:var(--statistics-accent); margin-bottom:22px;
+}
+.epilogue-notice strong,.epilogue-parenthood strong { font-weight:600; }
+.epilogue-research {
+ padding:24px 26px; margin:0 0 38px;
+ background:#dfcbb51f; border-block:1px solid var(--statistics-line);
+}
+.epilogue-research p:first-child { margin-bottom:18px; }
+.epilogue-research .epilogue-note { margin:0; }
+.epilogue-listening { border-left:2px solid var(--statistics-line); padding-left:24px; margin:0 0 42px; }
+.epilogue-listening p { font:400 24px/1.5 Georgia,'Times New Roman',serif; margin:0; }
+.epilogue-parenthood { border-top:1px solid var(--statistics-line); padding-top:30px; }
+.epilogue-parenthood p:last-child { margin-bottom:0; }
+.epilogue-closing { margin-top:42px; }
+.epilogue-closing p { font-size:clamp(30px,3.2vw,42px); line-height:1.3; max-width:32ch; margin-bottom:18px; }
+.epilogue-closing p + p { margin-left:0; }
+@media(max-width:700px) {
+ .epilogue-introduction { margin-bottom:30px; }
+ .epilogue-introduction p:first-child { font-size:21px; }
+ .epilogue .epilogue-notice p,.epilogue .epilogue-parenthood p:first-child { font-size:26px; }
+ .epilogue-research { padding:20px 16px; margin-bottom:32px; }
+ .epilogue-listening { padding-left:18px; margin-bottom:32px; }
+ .epilogue-listening p { font-size:22px; }
+ .epilogue-parenthood { padding-top:26px; }
+ .epilogue-closing { margin-top:32px; }
+ .epilogue-closing p { font-size:30px; }
+}

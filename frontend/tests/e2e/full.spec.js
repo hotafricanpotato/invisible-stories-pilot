@@ -57,8 +57,8 @@ test('full route twice: three real UI completions, exact notice, reset, replay, 
     await page.getByRole('button',{name:'Далее',exact:true}).click();
     await page.getByRole('button',{name:'Завершить просмотр',exact:true}).click();
   await completeFinalTestInBrowser(page);
-    await expect(page).toHaveURL(/\/complete$/);
-    await expect(page.locator('main')).toContainText('Эпилог пока не подключён.');
+    await expect(page).toHaveURL(/\/epilogue$/);
+    await expect(page.getByRole('heading',{level:1})).toHaveText('Невидимое не значит несуществующее.');
     await expect(page.locator('main')).not.toContainText('История Ильи');
     if(round===0) {
       await page.getByRole('button',{name:'Начать заново',exact:true}).click();

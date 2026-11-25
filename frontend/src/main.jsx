@@ -15,13 +15,14 @@ import { storyRegistry } from "./content/storyRegistry.js";
 import {
   Home,
   StatisticsPage,
-  Completion,
 } from "./pages/Exhibition";
 import StorySelection from "./pages/StorySelection";
 import "./styles/story-selection.css";
 import StoryPage from "./pages/StoryPage";
 import "./styles.css";
 import "./styles/statistics-exhibition.css";
+import EpiloguePage from "./pages/EpiloguePage";
+import "./styles/epilogue.css";
 import FinalTestPage from "./pages/FinalTestPage";
 import "./styles/final-test.css";
 function App() {
@@ -33,7 +34,10 @@ function App() {
   const [resetPending, setResetPending] = useState(false);
   const cancel = useRef();
   const resetTrigger = useRef();
+  const resetOrigin = useRef();
+  const requestReset = origin => { resetOrigin.current = origin; setResetOpen(true); };
   const path = allowedPath(location.pathname, state);
+  const epilogueSurface = location.pathname === "/epilogue";
   const finalSurface = location.pathname.startsWith("/final-test") || location.pathname === "/complete";
   const storyRoute = location.pathname.match(/^\/stories\/([^/]+)\/([^/]+)$/);
   const activeStory = storyRoute && Object.hasOwn(storyRegistry, storyRoute[1])
@@ -47,7 +51,7 @@ function App() {
     if (location.pathname !== "/")
       dispatch({ type: "CURSOR", path: location.pathname });
     window.scrollTo(0, 0);
-    main.current?.focus((location.pathname.startsWith("/statistics/") || finalSurface) ? {preventScroll:true} : undefined);
+    main.current?.focus((location.pathname.startsWith("/statistics/") || finalSurface || epilogueSurface) ? {preventScroll:true} : undefined);
   }, [location.pathname, path, dispatch]);
   useEffect(() => {
     if (resetPending && location.pathname === "/") {
@@ -59,7 +63,7 @@ function App() {
     if (resetOpen) cancel.current?.focus();
   }, [resetOpen]);
   return (
-    <div className={storyTheme ? "app-shell story-shell" : location.pathname === "/stories" ? "app-shell selection-shell" : location.pathname.startsWith("/statistics") || finalSurface ? `app-shell statistics-shell${finalSurface ? " final-test-shell" : ""}` : "app-shell"} data-story-theme={storyTheme}>
+    <div className={storyTheme ? "app-shell story-shell" : location.pathname === "/stories" ? "app-shell selection-shell" : location.pathname.startsWith("/statistics") || finalSurface || epilogueSurface ? `app-shell statistics-shell${finalSurface ? " final-test-shell" : ""}${epilogueSurface ? " epilogue-shell" : ""}` : "app-shell"} data-story-theme={storyTheme}>
       <a className="skip-link" href="#main">
         К содержанию
       </a>
@@ -78,7 +82,7 @@ function App() {
         <button
           className="restart"
           ref={resetTrigger}
-          onClick={() => setResetOpen(true)}
+          onClick={event => requestReset(event.currentTarget)}
         >
           Начать заново
         </button>
@@ -94,7 +98,7 @@ function App() {
               ref={cancel}
               onClick={() => {
                 setResetOpen(false);
-                resetTrigger.current?.focus();
+                (resetOrigin.current ?? resetTrigger.current)?.focus();
               }}
             >
               Отмена
@@ -117,12 +121,13 @@ function App() {
         <span className={location.pathname.startsWith("/stories") ? "current" : ""}>02 · ИСТОРИИ</span>
         <span className={location.pathname.startsWith("/statistics") ? "current" : ""}>03 · СТАТИСТИКА</span>
         <span className={finalSurface ? "current" : ""}>04 · ИТОГОВЫЙ ТЕСТ</span>
+        {epilogueSurface && <span className="current">05 · ЭПИЛОГ</span>}
       </div>
       <main
         id="main"
         ref={main}
         tabIndex="-1"
-        className={storyTheme ? "story-main" : location.pathname === "/stories" ? "selection-main" : location.pathname.startsWith("/statistics") || finalSurface ? `statistics-main${finalSurface ? " final-test-main" : ""}` : location.pathname === "/" ? "home-main" : "page-main"}
+        className={storyTheme ? "story-main" : location.pathname === "/stories" ? "selection-main" : location.pathname.startsWith("/statistics") || finalSurface || epilogueSurface ? `statistics-main${finalSurface ? " final-test-main" : ""}${epilogueSurface ? " epilogue-main" : ""}` : location.pathname === "/" ? "home-main" : "page-main"}
       >
         {!storageAvailable && (
           <p role="status" className="note">
@@ -139,7 +144,7 @@ function App() {
             <Route path="/stories/:storyId/:stepId" element={<StoryPage />} />
             <Route path="/statistics/:screenId" element={<StatisticsPage />} />
             <Route path="/final-test/:questionId" element={<FinalTestPage />} />
-            <Route path="/complete" element={<Completion />} />
+            <Route path="/epilogue" element={<EpiloguePage onRestart={requestReset} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         )}

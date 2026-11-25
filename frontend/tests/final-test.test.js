@@ -21,7 +21,7 @@ test('guards require stories plus statistics; no old completion or skipped quest
 test('answers, back visits, completion, replay and reload never alter story or statistics progress',()=>{
  let s=ready();const stories=structuredClone(s.stories),stats=structuredClone(s.stats);
  for(let n=1;n<=5;n++){assert.equal(m.reducer(s,{type:'FINAL_NEXT',page:n}),s);s=answer(s,n);s=m.reducer(s,{type:'FINAL_NEXT',page:n});assert.deepEqual(m.restore(JSON.stringify(s)),s);}
- assert.equal(s.finalTest.completed,true);assert.equal(m.allowedPath('/final-test/review',s),'/final-test/review');assert.equal(m.allowedPath('/complete',s),'/complete');
+ assert.equal(s.finalTest.completed,true);assert.equal(m.allowedPath('/final-test/review',s),'/final-test/review');assert.equal(m.allowedPath('/complete',s),'/epilogue');
  s=m.reducer(s,{type:'FINAL_VISIT',page:2});assert.equal(s.finalTest.completed,true);assert.deepEqual(s.stories,stories);assert.deepEqual(s.stats,stats);
  s=m.reducer(s,{type:'FINAL_RESET'});assert.deepEqual(s.finalTest,m.initialState().finalTest);assert.deepEqual(s.stories,stories);assert.deepEqual(s.stats,stats);assert.equal(m.allowedPath('/complete',s),'/final-test/1');
 });

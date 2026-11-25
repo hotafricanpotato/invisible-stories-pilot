@@ -29,7 +29,7 @@ test('exact five-question route, review, reload, replay and screenshots',async({
  for(const [i,q] of content.questions.entries()){const block=page.locator('.final-review-entry').nth(i);await expect(block.locator('dd').first()).toHaveText(`${choices[i]}. ${q.options[choices[i]]}`);await expect(block.locator('dd').last()).toHaveText(`${q.key}. ${q.options[q.key]}`);await expect(block).toContainText(q.explanation);}
  await expect(page.locator('main')).not.toContainText(/балл|процент|до\/после|\d+%/i);await page.screenshot({path:`${artifacts}/final-test-review-${width}px.png`,fullPage:true});await noOverflow(page);
  let s=await saved(page);expect(s.stories).toEqual(original.stories);expect(s.stats).toEqual(before.stats);expect(s.finalTest.completed).toBe(true);
- await page.getByRole('button',{name:'Завершить просмотр',exact:true}).click();await expect(page).toHaveURL(/\/complete$/);
+ await page.getByRole('button',{name:'Перейти к эпилогу',exact:true}).click();await expect(page).toHaveURL(/\/epilogue$/);
  await page.goto('http://pilot.test/final-test/review');await page.getByRole('button',{name:'Пройти ещё раз'}).click();await expect(page).toHaveURL(/\/final-test\/1$/);s=await saved(page);expect(s.finalTest.answers).toEqual({});expect(s.finalTest.completed).toBe(false);expect(s.stories).toEqual(original.stories);expect(s.stats).toEqual(before.stats);
  await page.goto('http://pilot.test/complete');await expect(page).toHaveURL(/\/final-test\/1$/);
  for(let n=1;n<=5;n++){await page.getByRole('radio').first().check();await page.getByRole('button',{name:n===5?'Перейти к разбору':'Далее',exact:true}).click();}

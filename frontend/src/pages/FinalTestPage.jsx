@@ -35,7 +35,7 @@ export default function FinalTestPage() {
       </section>)}
       <nav className="final-test-navigation" aria-label="Навигация после разбора">
         <button onClick={() => { dispatch({type:"FINAL_RESET"}); nav("/final-test/1"); }}>Пройти ещё раз</button>
-        <button className="primary" onClick={() => nav("/complete")}>Завершить просмотр</button>
+        <button className="primary" onClick={() => nav("/epilogue")}>Перейти к эпилогу</button>
       </nav>
     </div> : <>
       <section className="final-test-situation" aria-labelledby="situation-title">

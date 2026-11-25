@@ -175,15 +175,15 @@ test("complete production exhibition, exact content, gates, reload, reset and no
   await page.getByRole("button", { name: "Завершить просмотр" }).click();
   await completeFinalTestInBrowser(page);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Спасибо за участие",
+    "Невидимое не значит несуществующее.",
   );
   await page.reload();
-  await expect(page).toHaveURL(/\/complete$/);
+  await expect(page).toHaveURL(/\/epilogue$/);
   await page
     .getByRole("button", { name: "Начать заново", exact: true })
     .click();
   await page.getByRole("button", { name: "Отмена", exact: true }).click();
-  await expect(page).toHaveURL(/\/complete$/);
+  await expect(page).toHaveURL(/\/epilogue$/);
   await page
     .getByRole("button", { name: "Начать заново", exact: true })
     .click();

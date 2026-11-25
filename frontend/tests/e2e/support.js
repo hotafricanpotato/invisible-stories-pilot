@@ -113,6 +113,6 @@ export async function completeFinalTestInBrowser(page) {
     await page.getByRole('button',{name:n===5?'Перейти к разбору':'Далее',exact:true}).click();
   }
   await expect(page).toHaveURL(/\/final-test\/review$/);
-  await page.getByRole('button',{name:'Завершить просмотр',exact:true}).click();
-  await expect(page).toHaveURL(/\/complete$/);
+  await page.getByRole('button',{name:'Перейти к эпилогу',exact:true}).click();
+  await expect(page).toHaveURL(/\/epilogue$/);
 }
