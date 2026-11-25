@@ -1,6 +1,9 @@
-name: GitHub Pages (manual approval only)
-# No push/pull_request trigger. This file alone never publishes on push.
+name: GitHub Pages (manual or one approved tag)
+# Branch pushes do not trigger deployment. Do not create the tag before approval.
 on:
+  push:
+    tags:
+      - pages-first-approved
   workflow_dispatch:
     inputs:
       confirmation:
@@ -13,14 +16,55 @@ concurrency:
   group: github-pages
   cancel-in-progress: false
 jobs:
+  validate:
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/tags/pages-first-approved' && github.event.deleted != true) ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/story-design-system' && inputs.confirmation == 'DEPLOY_PAGES')
+    runs-on: ubuntu-latest
+    outputs:
+      revision: ${{ steps.approval.outputs.revision }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate trigger, approved commit and branch ancestry
+        id: approval
+        shell: bash
+        env:
+          APPROVED_SHA: ${{ vars.PAGES_APPROVED_SHA }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          revision=$(git rev-parse 'HEAD^{commit}')
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            [[ "$GITHUB_REF" == "refs/tags/pages-first-approved" ]] || exit 1
+            if [[ ! "$APPROVED_SHA" =~ ^[0-9a-f]{40}$ || "$revision" != "$APPROVED_SHA" ]]; then
+              echo "::error::Tag commit must match the separately approved PAGES_APPROVED_SHA repository variable."
+              exit 1
+            fi
+          elif [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            [[ "$GITHUB_REF" == "refs/heads/story-design-system" && "$CONFIRMATION" == "DEPLOY_PAGES" ]] || exit 1
+          else
+            exit 1
+          fi
+          git show-ref --verify refs/remotes/origin/story-design-system
+          if ! git merge-base --is-ancestor "$revision" refs/remotes/origin/story-design-system; then
+            echo "::error::Deployment commit is not in story-design-system history."
+            exit 1
+          fi
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
   build:
-    if: github.ref == 'refs/heads/story-design-system' && inputs.confirmation == 'DEPLOY_PAGES'
+    needs: validate
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.revision }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -39,7 +83,7 @@ jobs:
         with:
           path: frontend/dist-pages
   deploy:
-    needs: build
+    needs: [validate, build]
     runs-on: ubuntu-latest
     permissions:
       pages: write
