@@ -7,3 +7,6 @@ test('default build keeps clean BrowserRouter URLs and keyboard skip without cha
  await page.waitForFunction(()=>[...document.images].every(i=>i.complete&&i.naturalWidth>0));
  for(const image of await page.locator('img').all())expect(await image.getAttribute('src')).toMatch(/^\/assets\//);
 });
+
+import {registerResetRegression} from '../reset-regression.js';
+registerResetRegression(test,route=>'http://pilot.test'+route);

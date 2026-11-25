@@ -53,3 +53,6 @@ test('every public resource is served byte-identically under the repository pref
  const publicRoot=path.join(process.cwd(),'public');
  for(const file of await walk(publicRoot)){const relative=path.relative(publicRoot,file).split(path.sep).join('/');const response=await request.get(origin+prefix+relative);expect(response.status(),relative).toBe(200);expect(Buffer.compare(await response.body(),await readFile(file)),relative).toBe(0);}
 });
+
+import {registerResetRegression} from '../reset-regression.js';
+registerResetRegression(test,url);

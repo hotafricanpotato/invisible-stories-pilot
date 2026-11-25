@@ -3,7 +3,7 @@ name: GitHub Pages (manual or one approved tag)
 on:
   push:
     tags:
-      - pages-first-approved
+      - pages-retry-approved-1
   workflow_dispatch:
     inputs:
       confirmation:
@@ -18,7 +18,7 @@ concurrency:
 jobs:
   validate:
     if: >-
-      (github.event_name == 'push' && github.ref == 'refs/tags/pages-first-approved' && github.event.deleted != true) ||
+      (github.event_name == 'push' && github.ref == 'refs/tags/pages-retry-approved-1' && github.event.deleted != true) ||
       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/story-design-system' && inputs.confirmation == 'DEPLOY_PAGES')
     runs-on: ubuntu-latest
     outputs:
@@ -38,7 +38,7 @@ jobs:
           set -euo pipefail
           revision=$(git rev-parse 'HEAD^{commit}')
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
-            [[ "$GITHUB_REF" == "refs/tags/pages-first-approved" ]] || exit 1
+            [[ "$GITHUB_REF" == "refs/tags/pages-retry-approved-1" ]] || exit 1
             if [[ ! "$APPROVED_SHA" =~ ^[0-9a-f]{40}$ || "$revision" != "$APPROVED_SHA" ]]; then
               echo "::error::Tag commit must match the separately approved PAGES_APPROVED_SHA repository variable."
               exit 1

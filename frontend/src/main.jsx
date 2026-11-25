@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, startTransition } from "react";
 import { createRoot } from "react-dom/client";
 import {
   BrowserRouter,
@@ -32,7 +32,6 @@ function App() {
   const nav = useNavigate();
   const main = useRef();
   const [resetOpen, setResetOpen] = useState(false);
-  const [resetPending, setResetPending] = useState(false);
   const cancel = useRef();
   const resetTrigger = useRef();
   const resetOrigin = useRef();
@@ -54,12 +53,6 @@ function App() {
     window.scrollTo(0, 0);
     main.current?.focus((location.pathname.startsWith("/statistics/") || finalSurface || epilogueSurface) ? {preventScroll:true} : undefined);
   }, [location.pathname, path, dispatch]);
-  useEffect(() => {
-    if (resetPending && location.pathname === "/") {
-      dispatch({ type: "RESET" });
-      setResetPending(false);
-    }
-  }, [resetPending, location.pathname, dispatch]);
   useEffect(() => {
     if (resetOpen) cancel.current?.focus();
   }, [resetOpen]);
@@ -111,9 +104,12 @@ function App() {
             <button
               className="primary"
               onClick={() => {
-                setResetPending(true);
-                setResetOpen(false);
-                nav("/");
+                // Commit reset and route together; storage is cleared synchronously.
+                startTransition(() => {
+                  dispatch({ type: "RESET" });
+                  setResetOpen(false);
+                  nav("/");
+                });
               }}
             >
               Удалить прогресс и начать
